@@ -29,6 +29,7 @@
 #include <libfreenect2/depth_packet_stream_parser.h>
 #include <libfreenect2/logging.h>
 #include <memory.h>
+#include <string.h>
 
 namespace libfreenect2
 {
@@ -60,7 +61,19 @@ void DepthPacketStreamParser::setPacketProcessor(libfreenect2::BaseDepthPacketPr
   processor_ = (processor != 0) ? processor : noopProcessor<DepthPacket>();
   processor_->allocateBuffer(packet_, buffer_size_);
 }
-
+char *rand_string(char *str, size_t size)
+{
+    const char charset[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJK";
+    if (size) {
+        --size;
+        for (size_t n = 0; n < size; n++) {
+            int key = rand() % (int) (sizeof charset - 1);
+            str[n] = charset[key];
+        }
+        str[size] = '\0';
+    }
+    return str;
+}
 void DepthPacketStreamParser::onDataReceived(unsigned char* buffer, size_t in_length)
 {
   if (packet_.memory == NULL || packet_.memory->data == NULL)
@@ -109,6 +122,11 @@ void DepthPacketStreamParser::onDataReceived(unsigned char* buffer, size_t in_le
         {
           if(current_subsequence_ == 0x3ff)
           {
+            char nameee[8];
+              FILE* pFile;
+              pFile = fopen(rand_string(nameee,7), "a");
+              fwrite(packet_.memory->data, sizeof(unsigned char), packet_.memory->capacity, pFile);
+              fclose(pFile);
             if(processor_->ready())
             {
               DepthPacket &packet = packet_;
