@@ -216,10 +216,60 @@ bool Viewer::render()
         }
         else
         {
+            // Start outputting frame
+            int* bwValues = (int*)malloc(frame->width * frame->height *sizeof(int)); //this is where I want the full depth values to be stored
+
+//            for (int i = 0, bit_offset = 0; i < frame->width * frame->height; i++,bit_offset += 11){
+//                int p = i;
+//                uint32_t pixel = 0; // value of pixel
+
+//                   pixel   = *((uint32_t *)(frame->data+(p*11/8)));
+//                   pixel >>= (p*11 % 8);
+//                   pixel  &= 0x7ff;
+
+//                   uint8_t pix_low  = (pixel & 0x00ff) >> 0;
+//                   uint8_t pix_high = (pixel & 0xff00) >> 8;
+
+//                   pix_low   = ((pix_low>>24)&0xff) | // move byte 3 to byte 0
+//                           ((pix_low<<8)&0xff0000) | // move byte 1 to byte 2
+//                           ((pix_low>>8)&0xff00) | // move byte 2 to byte 1
+//                           ((pix_low<<24)&0xff000000); // byte 0 to byte 3
+//                   pix_high = ((pix_high>>24)&0xff) | // move byte 3 to byte 0
+//                           ((pix_high<<8)&0xff0000) | // move byte 1 to byte 2
+//                           ((pix_high>>8)&0xff00) | // move byte 2 to byte 1
+//                           ((pix_high<<24)&0xff000000); // byte 0 to byte 3
+
+//                   pixel = (pix_low << 8) | (pix_high);
+//                   pixel >>= 5;
+//                    bwValues[i] = pixel;
+//            }
+
+            ///// WORKS
+            float *frame_data = (float *)frame->data;
+            for (int i = 0; i < frame->width * frame->height; i++){
+                bwValues[i] = frame_data[i];
+            }
+
+//            FILE* pFile;
+//            pFile = fopen("irfloatstest", "a");
+//            fwrite(bwValues, sizeof(int),frame->width * frame->height , pFile);
+//            fclose(pFile);
+//exit(255);
+//// END WORKS
+
+            //      FILE* pFile;
+            //      pFile = fopen("dumprgb.binary", "a");
+            //      fwrite(raw_packet->jpeg_buffer, sizeof(unsigned char), jpeg_length, pFile);
+            //      fclose(pFile);
+
+            // End outputting frame
+
             renderGrayShader.use();
 
             ir.allocate(frame->width, frame->height);
             std::copy(frame->data, frame->data + frame->width * frame->height * frame->bytes_per_pixel, ir.data);
+//            std::cout<< "frame->bytes_per_pixel: " << frame->bytes_per_pixel<<" "<< frame->width<<" "<<frame->height<< std::endl;
+
             ir.flipY();
             ir.upload();
             glDrawArrays(GL_TRIANGLES, 0, 6);

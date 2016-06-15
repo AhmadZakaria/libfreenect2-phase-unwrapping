@@ -146,10 +146,10 @@ void RgbPacketStreamParser::onDataReceived(unsigned char* buffer, size_t length)
         fb.length = 0;
         return;
       }
-      FILE* pFile;
-      pFile = fopen("dumprgb.binary", "a");
-      fwrite(raw_packet->jpeg_buffer, sizeof(unsigned char), jpeg_length, pFile);
-      fclose(pFile);
+//      FILE* pFile;
+//      pFile = fopen("dumprgb12.binary", "a");
+//      fwrite(raw_packet->jpeg_buffer, sizeof(unsigned char), jpeg_length, pFile);
+//      fclose(pFile);
       // can the processor handle the next image?
       if(processor_->ready())
       {

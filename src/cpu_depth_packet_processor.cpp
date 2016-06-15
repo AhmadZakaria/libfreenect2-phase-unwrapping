@@ -40,6 +40,7 @@
 
 #include <cmath>
 #include <limits>
+#include <iostream>
 
 /**
  * Vector class.
@@ -320,6 +321,11 @@ public:
 
   int32_t decodePixelMeasurement(unsigned char* data, int sub, int x, int y)
   {
+//      FILE* pFile;
+//      pFile = fopen("tab11to16.dat", "w");
+//      fwrite(lut11to16, sizeof(int16_t),2048 , pFile);
+//      fclose(pFile);
+//      exit(255);
     if (x < 1 || y < 0 || 510 < x || 423 < y)
     {
       return lut11to16[0];
@@ -856,6 +862,14 @@ void CpuDepthPacketProcessor::loadP0TablesFromCommandResponse(unsigned char* buf
   impl_->fillTrigTable(impl_->p0_table0, impl_->trig_table0);
   impl_->fillTrigTable(impl_->p0_table1, impl_->trig_table1);
   impl_->fillTrigTable(impl_->p0_table2, impl_->trig_table2);
+
+//  FILE* pFile;
+//  pFile = fopen("p0tables.dat", "a");
+//  fwrite(impl_->trig_table0, sizeof(uint16_t), 512*424, pFile);
+//  fwrite(impl_->trig_table1, sizeof(uint16_t), 512*424, pFile);
+//  fwrite(impl_->trig_table2, sizeof(uint16_t), 512*424, pFile);
+//  fclose(pFile);
+//  exit(255);
 }
 
 void CpuDepthPacketProcessor::loadXZTables(const float *xtable, const float *ztable)
@@ -871,7 +885,6 @@ void CpuDepthPacketProcessor::loadLookupTable(const short *lut)
 {
   std::copy(lut, lut + LUT_SIZE, impl_->lut11to16);
 }
-
 /**
  * Process a packet.
  * @param packet Packet to process.
@@ -894,6 +907,23 @@ void CpuDepthPacketProcessor::process(const DepthPacket &packet)
   Mat<unsigned char> m_max_edge_test(424, 512);
 
   float *m_ptr = (m.ptr(0, 0)->val);
+//decodePixelMeasurement(data, 0, x, y);
+//  FILE* pFile;
+//  pFile = fopen("decodedIR", "a");
+//int counter = 0;
+//  for (int img = 0; img < 9; ++img)
+//      for(int y = 0; y < 424; ++y)
+//          for(int x = 0; x < 512; ++x)
+//          {
+//              int32_t pixel = impl_->decodePixelMeasurement(packet.buffer, img, x, y);
+//              fwrite(&pixel, sizeof(int32_t), 1, pFile);
+//              counter++;
+//          }
+//  std::cout<<"counter"<<counter<<std::endl;
+//  fclose(pFile);
+//exit(255);
+
+
 
   for(int y = 0; y < 424; ++y)
     for(int x = 0; x < 512; ++x, m_ptr += 9)

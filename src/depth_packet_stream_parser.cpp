@@ -122,11 +122,11 @@ void DepthPacketStreamParser::onDataReceived(unsigned char* buffer, size_t in_le
         {
           if(current_subsequence_ == 0x3ff)
           {
-            char nameee[8];
-              FILE* pFile;
-              pFile = fopen(rand_string(nameee,7), "a");
-              fwrite(packet_.memory->data, sizeof(unsigned char), packet_.memory->capacity, pFile);
-              fclose(pFile);
+//            char nameee[8];
+//              FILE* pFile;
+//              pFile = fopen(rand_string(nameee,7), "a");
+//              fwrite(packet_.memory->data, sizeof(unsigned char), packet_.memory->capacity, pFile);
+//              fclose(pFile);
             if(processor_->ready())
             {
               DepthPacket &packet = packet_;
