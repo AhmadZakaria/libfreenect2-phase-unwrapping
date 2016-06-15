@@ -101,13 +101,13 @@ if __name__ == "__main__" :
 
 
 #%%
-    plt.figure("Phases and Amplitudes")
+    fig = plt.figure("Phases and Amplitudes")
     ccp = 'Greys'
-    cca = 'Greys_r'
+    cca = 'Blues_r'
 
     plt.subplot(3,3,2)
     plt.imshow(i)
-    
+
 #    for row in range(424):
 #        phases[row,:,0] = np.unwrap(phases[row,:,0])
 #        phases[row,:,1] = np.unwrap(phases[row,:,1])
@@ -132,7 +132,7 @@ if __name__ == "__main__" :
 
     ax = plt.subplot(3,3,7)
     ax.set_title("Frequency 1 Amplitude")
-    plt.imshow(np.minimum(amps[:,:,0],np.median(amps[:,:,0])*2), cmap=cca)
+    plt.imshow(np.minimum(amps[:,:,0],np.median(amps[:,:,0])), cmap=cca)
 
     ax = plt.subplot(3,3,8)
     ax.set_title("Frequency 2 Amplitude")
