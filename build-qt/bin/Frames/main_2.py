@@ -33,7 +33,7 @@ if __name__ == "__main__" :
        irpic = (abs(((irpic.reshape((9,424,512))))))
        print (irpic.shape)
 
-       plt.subplot(4,3,2)
+       plt.subplot(4,1,1)
 
        i = imread("dumprgb12.jpeg")
 
@@ -102,12 +102,13 @@ if __name__ == "__main__" :
 
 #%%
     fig = plt.figure("Phases and Amplitudes")
-    ccp = 'Greys'
-    cca = 'Blues_r'
+    ccp = 'Greens'
+    cca = 'Greens_r'
 
-    plt.subplot(3,3,2)
+    ax = plt.subplot(3,1,1)
+    ax.set_title("RGB image")
     plt.imshow(i)
-
+    
 #    for row in range(424):
 #        phases[row,:,0] = np.unwrap(phases[row,:,0])
 #        phases[row,:,1] = np.unwrap(phases[row,:,1])
@@ -118,26 +119,34 @@ if __name__ == "__main__" :
 #        phases[:,col,1] = np.unwrap(phases[:,col,1])
 #        phases[:,col,2] = np.unwrap(phases[:,col,2])
     
-    ax = plt.subplot(3,3,4)
+    ax = plt.subplot(3,4,5)
     ax.set_title("Frequency 1 phase-shift")
     plt.imshow((phases[:,:,0]), cmap=ccp)
 
-    ax = plt.subplot(3,3,5)
+    ax = plt.subplot(3,4,6)
     ax.set_title("Frequency 2 phase-shift")
     plt.imshow((phases[:,:,1]), cmap=ccp)
 
-    ax = plt.subplot(3,3,6)
+    ax = plt.subplot(3,4,7)
     ax.set_title("Frequency 3 phase-shift")
     plt.imshow((phases[:,:,2]), cmap=ccp)
+    
+    ax = plt.subplot(3,4,8)
+    ax.set_title("Composite phases")
+    plt.imshow((phases))
 
-    ax = plt.subplot(3,3,7)
+    ax = plt.subplot(3,4,9)
     ax.set_title("Frequency 1 Amplitude")
     plt.imshow(np.minimum(amps[:,:,0],np.median(amps[:,:,0])), cmap=cca)
 
-    ax = plt.subplot(3,3,8)
+    ax = plt.subplot(3,4,10)
     ax.set_title("Frequency 2 Amplitude")
     plt.imshow(np.minimum(amps[:,:,1],np.median(amps[:,:,1])), cmap=cca)
 
-    ax = plt.subplot(3,3,9)
+    ax = plt.subplot(3,4,11)
     ax.set_title("Frequency 3 Amplitude")
     plt.imshow(np.minimum(amps[:,:,2],np.median(amps[:,:,2])), cmap=cca)
+    
+    ax = plt.subplot(3,4,12)
+    ax.set_title("Composite amplitudes")
+    plt.imshow(clrs.rgb_to_hsv(np.minimum(amps,np.median(amps))))
