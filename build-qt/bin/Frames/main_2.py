@@ -12,6 +12,11 @@ import scipy.constants as csts
 import numpy as np
 from math import atan2, sin, cos, floor ,fabs ,log ,exp, sqrt
 
+from skimage.restoration import unwrap_phase
+from skimage import exposure
+from skimage import filter
+
+
 
 
 if __name__ == "__main__" :
@@ -73,6 +78,16 @@ if __name__ == "__main__" :
     
     phases[:,:,2]=np.arctan2(-(first_term),(second_term))
     amps[:,:,2]=np.sqrt(np.square(second_term)+np.square(first_term))/2.
+    
+    
+    amps[:,:,0]=np.minimum(amps[:,:,0],np.median(amps[:,:,0]))
+    amps[:,:,1]=np.minimum(amps[:,:,1],np.median(amps[:,:,1]))
+    amps[:,:,2]=np.minimum(amps[:,:,2],np.median(amps[:,:,2]))
+    
+#    amps[:,:,0] = exposure.equalize_hist(amps[:,:,0])    
+#    amps[:,:,1] = exposure.equalize_hist(amps[:,:,1])    
+#    amps[:,:,2] = exposure.equalize_hist(amps[:,:,2])    
+
     ### END ACCORDING TO PATENT
 
 #%%
@@ -175,6 +190,8 @@ if __name__ == "__main__" :
     ax1 = fig.add_subplot(221)
     ax1.set_title("Amplitude composed and filtered")
     
+    
+    #ir_filtered = exposure.equalize_hist(ir_filtered)   
     ir_filtered=np.minimum(ir_filtered,np.median(ir_filtered))
     ax1.imshow(ir_filtered, cmap='Greys_r')
     
@@ -549,7 +566,7 @@ if __name__ == "__main__" :
     #%%    
     ###ATTEMPT 4 TO CALCULATE WRAPPING COEFICIENTS
     
-    
+    '''
     ab_confidence_slope= -0.5330578
     ab_confidence_offset = 0.7694894
     max_dealias_confidence = 0.6108653
@@ -760,35 +777,37 @@ if __name__ == "__main__" :
                 depth_final=depth_linear
             
             
-            depth[y,x]=x_table[y, x]
+            depth[y,x]=depth_final
             
             
                 
    
-    '''
-    residuals[:,:,0]=3*n_0  -15*n_1 - (15*phases[:,:,1]/(2*np.pi) - 3*phases[:,:,0]/(2*np.pi))
-    residuals[:,:,1]=3*n_0  -2*n_2  - (2*phases[:,:,2]/(2*np.pi)  - 3*phases[:,:,0]/(2*np.pi))
-    residuals[:,:,2]=15*n_1 -2*n_2  - (2*phases[:,:,2]/(2*np.pi)  - 15*phases[:,:,1]/(2*np.pi))
-    
-    t1_t0_3=(t1-t0)/3
-    t2_t0=t2-t0
-    t2_t1=t2-t1
-    '''
-    
+#    
+#    residuals[:,:,0]=3*n_0  -15*n_1 - (15*phases[:,:,1]/(2*np.pi) - 3*phases[:,:,0]/(2*np.pi))
+#    residuals[:,:,1]=3*n_0  -2*n_2  - (2*phases[:,:,2]/(2*np.pi)  - 3*phases[:,:,0]/(2*np.pi))
+#    residuals[:,:,2]=15*n_1 -2*n_2  - (2*phases[:,:,2]/(2*np.pi)  - 15*phases[:,:,1]/(2*np.pi))
+#    
+#    t1_t0_3=(t1-t0)/3
+#    t2_t0=t2-t0
+#    t2_t1=t2-t1
+#    
+#    
     
     fig_depth = plt.figure()
     ax2 = fig_depth.add_subplot(131)
     ax2.set_title("residuals and sum")
+    #depth=np.minimum(depth,np.median(depth))
     #ax2.imshow(np.minimum(ir_filtered,np.median(ir_filtered)), cmap='Greens_r')
     ax2.imshow(depth,cmap='Greys')
     ax2 = fig_depth.add_subplot(132)
     ax2.imshow(z_table,cmap='Greys')
     ax2 = fig_depth.add_subplot(133)
-    ax2.imshow(depth,cmap='Greys')
+    ax2.imshow(ir_x,cmap='Greys')
+    '''
     
 #%%
     fig = plt.figure("Phases and Amplitudes")
-    ccp = 'Greens'
+    ccp = 'Greys_r'
     cca = 'Greens_r'
     
     plt.subplots_adjust(wspace=0, hspace=0)  #Remove spaces between subplots
@@ -808,6 +827,25 @@ if __name__ == "__main__" :
 #        phases[:,col,1] = np.unwrap(phases[:,col,1])
 #        phases[:,col,2] = np.unwrap(phases[:,col,2])
     
+#    phases[:,:,0]=filter.gaussian_filter(phases[:,:,0],3)
+#    phases[:,:,1]=filter.gaussian_filter(phases[:,:,1],3)
+#    phases[:,:,2]=filter.gaussian_filter(phases[:,:,2],3)
+    
+#    phases[:,:,0]=filter.denoise_bilateral(abs(phases[:,:,0]), sigma_range=0.05, sigma_spatial=5)
+#    phases[:,:,1]=filter.denoise_bilateral(abs(phases[:,:,1]), sigma_range=0.05, sigma_spatial=5)
+#    phases[:,:,2]=filter.denoise_bilateral(abs(phases[:,:,2]), sigma_range=0.05, sigma_spatial=5)
+    
+    
+    phases[:,:,0] = unwrap_phase(phases[:,:,0])
+    phases[:,:,1] = unwrap_phase(phases[:,:,1])
+    phases[:,:,2] = unwrap_phase(phases[:,:,2])
+
+    phases[:,:,0] = exposure.equalize_hist(phases[:,:,0])    
+    phases[:,:,1] = exposure.equalize_hist(phases[:,:,1])
+    phases[:,:,2] = exposure.equalize_hist(phases[:,:,2])
+    
+    
+    
     ax = plt.subplot(3,4,5)
     ax.set_axis_off() #Remove axis for better visualization
     #ax.set_title("Frequency 1 phase-shift")
@@ -826,22 +864,22 @@ if __name__ == "__main__" :
     ax = plt.subplot(3,4,8)
     ax.set_axis_off()
     #ax.set_title("Composite phases")
-    plt.imshow((phases))
+    plt.imshow(( (phases[:,:,0]+phases[:,:,1]+phases[:,:,2])/3 ))
 
     ax = plt.subplot(3,4,9)
     ax.set_axis_off()
     #ax.set_title("Frequency 1 Amplitude")
-    plt.imshow(np.minimum(amps[:,:,0],np.median(amps[:,:,0])), cmap=cca)
+    plt.imshow(amps[:,:,0], cmap=cca)
 
     ax = plt.subplot(3,4,10)
     ax.set_axis_off()
     #ax.set_title("Frequency 2 Amplitude")
-    plt.imshow(np.minimum(amps[:,:,1],np.median(amps[:,:,1])), cmap=cca)
+    plt.imshow(amps[:,:,1], cmap=cca)
 
     ax = plt.subplot(3,4,11)
     ax.set_axis_off()
     #ax.set_title("Frequency 3 Amplitude")
-    plt.imshow(np.minimum(amps[:,:,2],np.median(amps[:,:,2])), cmap=cca)
+    plt.imshow(amps[:,:,2], cmap=cca)
     
     ax = plt.subplot(3,4,12)
     ax.set_axis_off()
