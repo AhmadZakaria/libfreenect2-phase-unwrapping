@@ -103,7 +103,63 @@ if __name__ == "__main__" :
 
     #%%    
     ###ATTEMPT 1 TO CALCULATE WRAPPING COEFICIENTS
-    depth = np.ndarray((424,512,3),dtype=np.float)
+    '''
+    depth = np.ndarray((424,512),dtype=np.float)
+    residuals = np.ndarray((424,512,3),dtype=np.float)
+    sum_residuals = np.ndarray((424,512),dtype=np.float)
+    
+    n_0=1.0
+    n_1=1.0
+    n_2=1.0
+    
+    minimum = np.zeros((424,512),dtype=np.float)
+    minimum.fill(999999)
+    
+    n_0chosen = np.zeros((424,512),dtype=np.float)
+    
+    for y in range (0,424):
+        print "iter ",y
+        for x in range (0,512):
+            for n_0 in np.arange (-5,2,1.0):
+                for n_1 in np.arange (-4,4, 1.0):
+                    for n_2 in np.arange (-10,11, 1.0):
+                        residuals[y,x,0]=3*n_0  -15*n_1 - (15*phases[y,x,1]/(2*np.pi) - 3*phases[y,x,0]/(2*np.pi))
+                        residuals[y,x,1]=3*n_0  -2*n_2  - (2*phases[y,x,2]/(2*np.pi)  - 3*phases[y,x,0]/(2*np.pi))
+                        residuals[y,x,2]=15*n_1 -2*n_2  - (2*phases[y,x,2]/(2*np.pi)  - 15*phases[y,x,1]/(2*np.pi))
+                    
+                        sum_residuals[y,x]= np.power(residuals[y,x,0],2) + np.power(residuals[y,x,1],2) + np.power(residuals[y,x,2],2)
+                        
+                        if sum_residuals[y,x] < minimum[y,x]:
+                            #print "changing ",n_0,n_1,n_2
+                            minimum[y,x]=sum_residuals[y,x]
+                            depth [y,x]=csts.c *(phases[y,x,0] + 2*np.pi *n_0)/(4*np.pi*16)
+                            n_0chosen[y,x]=n_0
+    
+    
+    
+    
+    fig_depth = plt.figure()
+#    ax2 = fig_depth.add_subplot(261)
+#    ax2.set_title("residuals and sum")
+#    #ax2.imshow(np.minimum(ir_filtered,np.median(ir_filtered)), cmap='Greens_r')
+#    ax2.imshow(residuals[:,:,0])
+#    ax2 = fig_depth.add_subplot(262)
+#    ax2.imshow(residuals[:,:,1])
+#    ax2 = fig_depth.add_subplot(263)
+#    ax2.imshow(residuals[:,:,2])
+    
+    ax2 = fig_depth.add_subplot(141)
+    ax2.imshow(sum_residuals,cmap='Greys')
+    ax2 = fig_depth.add_subplot(142)
+    ax2.imshow(minimum,cmap='Greys')
+    ax2 = fig_depth.add_subplot(143)
+    ax2.imshow(depth,cmap='Greys')
+    ax2 = fig_depth.add_subplot(144)
+    ax2.imshow(n_0chosen,cmap='Greys')
+    '''
+    
+    #%%
+    ###ATTEMPT 2 TO GET DEPTH
 
 
     #%%
