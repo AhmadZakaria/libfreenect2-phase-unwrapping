@@ -32,6 +32,8 @@
 #include <cstring>
 #include <fstream>
 #include <string>
+#include <time.h>
+#include <sys/time.h>
 
 namespace libfreenect2
 {

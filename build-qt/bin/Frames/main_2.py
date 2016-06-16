@@ -21,12 +21,14 @@ if __name__ == "__main__" :
 #    a = np.fromfile(f, dtype=np.uint16)
 #    print a
 
+#    with open("p0tables.dat", "rb") as p0tf:
     with open("p0tables.dat", "rb") as p0tf:
         p0tables = np.fromfile(p0tf, dtype=np.uint16)
         p0tables = np.flipud(p0tables.reshape((424,512,3)))
         print p0tables.shape
 
-    with open("decodedIR", "rb") as f2:
+#    with open("decodedIR", "rb") as f2:
+    with open("../data/20160616-105203747.ir", "rb") as f2:
        plt.figure("Raw data")
        irpic = np.fromfile(f2, dtype=np.int32)
        print (irpic.shape)
@@ -35,7 +37,8 @@ if __name__ == "__main__" :
 
        plt.subplot(4,1,1)
 
-       i = imread("dumprgb12.jpeg")
+#       i = imread("dumprgb12.jpeg")
+       i = imread("../data/20160616-105203734.rgb")
 
 
        plt.imshow(i)
