@@ -10,7 +10,7 @@ import matplotlib.colors as clrs
 from scipy.misc import imread
 import scipy.constants as csts
 import numpy as np
-from math import atan2, sin, cos
+from math import atan2, sin, cos, floor ,fabs ,log ,exp, sqrt
 
 
 
@@ -159,10 +159,6 @@ if __name__ == "__main__" :
     '''
     
     #%%
-    ###ATTEMPT 2 TO GET DEPTH
-
-
-    #%%
     ###ATTEMPT 1 to implement bilateral filter on amplitude (page 58 of the good pdf)
     amplitude_filtered = np.ndarray((424,512,3),dtype=np.float)
     ir_filtered = np.ndarray((424,512),dtype=np.float)
@@ -178,8 +174,618 @@ if __name__ == "__main__" :
     fig = plt.figure()
     ax1 = fig.add_subplot(221)
     ax1.set_title("Amplitude composed and filtered")
-    ax1.imshow(np.minimum(ir_filtered,np.median(ir_filtered)), cmap='Greens_r')
+    
+    ir_filtered=np.minimum(ir_filtered,np.median(ir_filtered))
+    ax1.imshow(ir_filtered, cmap='Greys_r')
+    
+    
+    #print ir_filtered
+    
+    #%%
+    ###ATTEMPT 2 TO GET DEPTH
+    '''
+    depth = np.ndarray((424,512),dtype=np.float)
+    depth.fill(0.0)
+    
+    ab_confidence_slope= -0.5330578
+    ab_confidence_offset = 0.7694894
+    max_dealias_confidence = 0.6108653
+    min_dealias_confidence = 0.3490659
+    phase_offset = 0.0
+    unambigious_dist = 2083.333
+    individual_ab_threshold  = 3.0
+    ab_threshold = 10.0;
+    
+    
+    #Make the xz tables
+    TABLE_SIZE= 512*424
+    scaling_factor = 8192
+    unambigious_dist = 6250.0/3
+    divergence = 0
+    x_table = np.ndarray((TABLE_SIZE),dtype=np.float)
+    z_table = np.ndarray((TABLE_SIZE),dtype=np.float)
 
+    #found these values here https://threeconstants.wordpress.com/2014/11/09/kinect-v2-depth-camera-calibration/
+    fx=391.096
+    fy=463.098    
+    
+    cx=243.892
+    cy= 208.922
+    
+    for iter in range(0,TABLE_SIZE):
+        xi = iter % 512;
+        yi = iter / 512;
+        xd = (xi + 0.5 - cx)/fx;
+        yd = (yi + 0.5 - cy)/fy;
+        #double xu, yu;
+        #divergence += !undistort(xd, yd, xu, yu);
+        x_table[iter] = scaling_factor*xd;
+        z_table[iter] = unambigious_dist/sqrt(xd*xd + yd*yd + 1);
+    
+
+    
+    for y in range (0,424):
+        ##print "iter ",y
+        for x in range (0,512):
+            
+            ir_min = min(min(amplitude_filtered[y,x,0], amplitude_filtered[y,x,1]), amplitude_filtered[y,x,2])
+            ir_sum = amplitude_filtered[y,x,0] + amplitude_filtered[y,x,1] + amplitude_filtered[y,x,2];
+        
+            if ir_min < individual_ab_threshold or ir_sum < ab_threshold:
+                phase = 0;            
+            
+            else:
+                t0 = phases[y,x,0] / (2.0 * np.pi) * 3.0;
+                t1 = phases[y,x,1] / (2.0 * np.pi) * 15.0;
+                t2 = phases[y,x,2] / (2.0 * np.pi) * 2.0;
+                
+                t5 = (floor((t1 - t0) * 0.333333 + 0.5) * 3.0 + t0)
+                t3 = (-t2 + t5)
+                t4 = t3 * 2.0
+                
+                c1 = (t4 >= -t4) #True if t4 is positive
+                
+                
+                f1=0.0
+                if c1:
+                    f1=2.0
+                    f2=0.5
+                else:
+                    f1=-2.0
+                    f2=-0.5
+                t3=t3*f2
+                t3 = (t3 - floor(t3)) * f1;
+                
+                c2 = ((0.5 < abs(t3)) and (abs(t3) < 1.5))
+                
+                t6=0.0
+                if c1:
+                    t6=t5 + 15.0
+                    t7=t1 + 15.0
+                else:
+                    t6=t5
+                    t7=t1
+                
+                t8 = (floor((-t2 + t6) * 0.5 + 0.5) * 2.0 + t2) * 0.5
+                
+                t6 = t6* 0.333333
+                t7 = t7* 0.066667
+                
+                t9 = (t8 + t6 + t7)
+                t10 = t9 * 0.333333 # some avg
+                
+                t6 =t6* 2.0 * np.pi
+                t7 =t7* 2.0 * np.pi
+                t8 =t8* 2.0 * np.pi
+                
+                # some cross product
+                t8_new = t7 * 0.826977 - t8 * 0.110264
+                t6_new = t8 * 0.551318 - t6 * 0.826977
+                t7_new = t6 * 0.110264 - t7 * 0.551318
+                
+                t8 = t8_new
+                t6 = t6_new
+                t7 = t7_new
+                
+                norm = t8 * t8 + t6 * t6 + t7 * t7
+                mask=0.0
+                if t9 >= 0.0:
+                    mask=1.0
+                else:
+                    mask=0.0
+    
+                t10 =t10* mask
+                
+                
+                slope_positive = 0 < ab_confidence_slope
+                
+                ir_min_ = min(min(amplitude_filtered[y,x,0], amplitude_filtered[y,x,1]), amplitude_filtered[y,x,2]);
+                ir_max_ = max(max(amplitude_filtered[y,x,0], amplitude_filtered[y,x,1]), amplitude_filtered[y,x,2]);
+                
+                ir_x=0.0
+                if slope_positive:
+                    #print "Slope_positive is true and ir_min is",ir_min_
+                    ir_x=ir_min_
+                else:
+                    #print "Slope_positive is false and ir_max_ is",ir_max_
+                    ir_x=ir_max_
+                
+                #If it's 0 continue because the log(0) will fail
+                if ir_x==0:
+                    continue
+                
+                #print "ir_x",ir_x
+                ir_x = log(ir_x);
+                ir_x = (ir_x * ab_confidence_slope * 0.301030 + ab_confidence_offset) * 3.321928;
+                ir_x = exp(ir_x);
+                ir_x = min(max_dealias_confidence, max(min_dealias_confidence, ir_x));
+                ir_x =ir_x* ir_x;
+                
+                mask=0.0
+                if ir_x >= norm:
+                    mask2=1.0
+                else:
+                    mask2=0.0
+                
+                t11 = t10 * mask2;
+                
+                mask3=0.0
+                if max_dealias_confidence * max_dealias_confidence >= norm:
+                    mask3=1.0
+                else:
+                    mask3=0.0
+                    
+                t10 = t10* mask3
+                phase = t11
+                
+                
+                
+                
+            #I don't think the tables are correct
+            x_table = x_table.reshape(424,512)
+            z_table = z_table.reshape(424,512)
+            
+            zmultiplier = z_table[y, x]
+            xmultiplier = x_table[y, x]
+            
+            if 0 < phase:
+                phase=phase + phase_offset
+            else:
+                phase=phase
+                
+            depth_linear = zmultiplier * phase;
+            max_depth = phase * unambigious_dist * 2;
+            
+            cond1 =  True and (0 < depth_linear) and (0 < max_depth)
+            
+            xmultiplier = (xmultiplier * 90) / (max_depth * max_depth * 8192.0)
+            
+            depth_fit = depth_linear / (-depth_linear * xmultiplier + 1)
+            
+            if depth_fit < 0:
+                depth_fit=0.0
+            else:
+                depth_fit=depth_fit
+              
+            depth_final=0.0
+            if cond1:
+                depth_final=depth_fit
+            else:
+                depth_final=depth_linear
+            
+            
+            depth[y,x]=t2
+            
+    fig_depth = plt.figure()
+    ax_depth = fig_depth.add_subplot(111)   
+    ax_depth.imshow(depth, cmap='Greys_r')        
+            
+
+    print "Finished depth attempt 2"
+    '''
+    
+    #%%
+    '''
+    def undistort(x,y):
+        
+    x0 = x;
+    y0 = y;
+
+    last_x = x;
+    last_y = y;
+    max_iterations = 100;
+    
+    for iter in range (0,max_iterations):
+      x2 = x*x;
+      y2 = y*y;
+      x2y2 = x2 + y2;
+      x2y22 = x2y2*x2y2;
+      x2y23 = x2y2*x2y22;
+
+      #Jacobian matrix
+      Ja = k3*x2y23 + (k2+6*k3*x2)*x2y22 + (k1+4*k2*x2)*x2y2 + 2*k1*x2 + 6*p2*x + 2*p1*y + 1;
+      Jb = 6*k3*x*y*x2y22 + 4*k2*x*y*x2y2 + 2*k1*x*y + 2*p1*x + 2*p2*y;
+      Jc = Jb;
+      double Jd = k3*x2y23 + (k2+6*k3*y2)*x2y22 + (k1+4*k2*y2)*x2y2 + 2*k1*y2 + 2*p2*x + 6*p1*y + 1;
+
+      //Inverse Jacobian
+      double Jdet = 1/(Ja*Jd - Jb*Jc);
+      double a = Jd*Jdet;
+      double b = -Jb*Jdet;
+      double c = -Jc*Jdet;
+      double d = Ja*Jdet;
+
+      double f, g;
+      distort(x, y, f, g);
+      f -= x0;
+      g -= y0;
+
+      x -= a*f + b*g;
+      y -= c*f + d*g;
+      const double eps = std::numeric_limits<double>::epsilon()*16;
+      if (fabs(x - last_x) <= eps && fabs(y - last_y) <= eps)
+        break;
+      last_x = x;
+      last_y = y;
+    }
+    xu = x;
+    yu = y;
+    return iter < max_iterations;
+    '''
+    
+    
+    #%%    
+    ###ATTEMPT 3 TO CALCULATE WRAPPING COEFICIENTS
+    '''
+    depth = np.ndarray((424,512),dtype=np.float)
+    residuals = np.ndarray((424,512,3),dtype=np.float)
+    sum_residuals = np.ndarray((424,512),dtype=np.float)
+    
+    n_0=1.0
+    n_1=1.0
+    n_2=1.0
+    
+    t0=3*phases[:,:,0]/(2*np.pi)
+    t1=15*phases[:,:,1]/(2*np.pi)
+    t2=2*phases[:,:,2]/(2*np.pi)
+    
+    minimum = np.zeros((424,512),dtype=np.float)
+    minimum.fill(999999)
+    
+    residuals[:,:,0]=3*n_0  -15*n_1 - (15*phases[:,:,1]/(2*np.pi) - 3*phases[:,:,0]/(2*np.pi))
+    residuals[:,:,1]=3*n_0  -2*n_2  - (2*phases[:,:,2]/(2*np.pi)  - 3*phases[:,:,0]/(2*np.pi))
+    residuals[:,:,2]=15*n_1 -2*n_2  - (2*phases[:,:,2]/(2*np.pi)  - 15*phases[:,:,1]/(2*np.pi))
+    
+    t1_t0_3=(t1-t0)/3
+    t2_t0=t2-t0
+    t2_t1=t2-t1
+    
+    
+    
+    fig_depth = plt.figure()
+    ax2 = fig_depth.add_subplot(131)
+    ax2.set_title("residuals and sum")
+    #ax2.imshow(np.minimum(ir_filtered,np.median(ir_filtered)), cmap='Greens_r')
+    ax2.imshow(t1_t0_3,cmap='Greys')
+    ax2 = fig_depth.add_subplot(132)
+    ax2.imshow(t1,cmap='Greys')
+    ax2 = fig_depth.add_subplot(133)
+    ax2.imshow(t2_t1,cmap='Greys')
+    '''
+    def distort (x,y):
+        
+        cx=255.642
+        cy=203.704
+        fx=365.8
+        fy=365.8
+        k1=0.091391
+        k2=-0.271139
+        k3=0.0950107
+        p1=0.0
+        p2=0.0
+        
+        x2 = x * x;
+        y2 = y * y;
+        r2 = x2 + y2;
+        xy = x * y;
+        kr = ((k3 * r2 + k2) * r2 + k1) * r2 + 1.0;
+        
+        xd = x*kr + p2*(r2 + 2*x2) + 2*p1*xy;
+        yd = y*kr + p1*(r2 + 2*y2) + 2*p2*xy;
+        
+        return xd,yd
+    
+    def undistort (x,y):
+        cx=255.642
+        cy=203.704
+        fx=365.8
+        fy=365.8
+        k1=0.091391
+        k2=-0.271139
+        k3=0.0950107
+        p1=0.0
+        p2=0.0
+            
+        
+        x0 = x
+        y0 = y
+    
+        last_x = x;
+        last_y = y;
+        max_iterations = 100;
+        iter;
+        for inter in range (0, max_iterations):
+          x2 = x*x;
+          y2 = y*y;
+          x2y2 = x2 + y2;
+          x2y22 = x2y2*x2y2;
+          x2y23 = x2y2*x2y22;
+    
+          #Jacobian matrix
+          Ja = k3*x2y23 + (k2+6*k3*x2)*x2y22 + (k1+4*k2*x2)*x2y2 + 2*k1*x2 + 6*p2*x + 2*p1*y + 1;
+          Jb = 6*k3*x*y*x2y22 + 4*k2*x*y*x2y2 + 2*k1*x*y + 2*p1*x + 2*p2*y;
+          Jc = Jb;
+          Jd = k3*x2y23 + (k2+6*k3*y2)*x2y22 + (k1+4*k2*y2)*x2y2 + 2*k1*y2 + 2*p2*x + 6*p1*y + 1;
+    
+          #//Inverse Jacobian
+          Jdet = 1/(Ja*Jd - Jb*Jc);
+          a = Jd*Jdet;
+          b = -Jb*Jdet;
+          c = -Jc*Jdet;
+          d = Ja*Jdet;
+    
+          f=0.0
+          g=0.0
+          f,g=distort(x, y);
+          f =f - x0;
+          g =g - y0;
+    
+          x =x- a*f + b*g;
+          y =y- c*f + d*g;
+          
+        xu = x;
+        yu = y;
+        return xu,yu
+    #%%    
+    ###ATTEMPT 4 TO CALCULATE WRAPPING COEFICIENTS
+    
+    
+    ab_confidence_slope= -0.5330578
+    ab_confidence_offset = 0.7694894
+    max_dealias_confidence = 0.6108653
+    min_dealias_confidence = 0.3490659
+    phase_offset = 0.0
+    unambigious_dist = 2083.333
+    individual_ab_threshold  = 3.0
+    ab_threshold = 10.0;
+    
+    depth = np.ndarray((424,512),dtype=np.float)
+    residuals = np.ndarray((424,512,3),dtype=np.float)
+    sum_residuals = np.ndarray((424,512),dtype=np.float)
+    
+    n_0=1.0
+    n_1=1.0
+    n_2=1.0
+    
+    t0 = np.ndarray((424,512),dtype=np.float)
+    t1 = np.ndarray((424,512),dtype=np.float)
+    t2 = np.ndarray((424,512),dtype=np.float)
+    t3 = np.ndarray((424,512),dtype=np.float)
+    t5 = np.ndarray((424,512),dtype=np.float)
+    t4 = np.ndarray((424,512),dtype=np.float)
+    
+    t6 = np.ndarray((424,512),dtype=np.float)
+    t7 = np.ndarray((424,512),dtype=np.float)
+    t8 = np.ndarray((424,512),dtype=np.float)
+    t9 = np.ndarray((424,512),dtype=np.float)
+    t10 = np.ndarray((424,512),dtype=np.float)
+    t11 = np.ndarray((424,512),dtype=np.float)
+    
+    t6_new = np.ndarray((424,512),dtype=np.float)
+    t7_new = np.ndarray((424,512),dtype=np.float)
+    t8_new = np.ndarray((424,512),dtype=np.float)
+    
+    ir_max_ = np.ndarray((424,512),dtype=np.float)
+    ir_x = np.ndarray((424,512),dtype=np.float)
+    
+    phase = np.ndarray((424,512),dtype=np.float)
+
+    
+    cx=255.642
+    cy=203.704
+    fx=365.8
+    fy=365.8
+    k1=0.091391
+    k2=-0.271139
+    k3=0.0950107
+    p1=0.0
+    p2=0.0
+    
+    
+    
+    
+    #Make the xz tables
+    TABLE_SIZE= 512*424
+    scaling_factor = 8192
+    unambigious_dist = 6250.0/3
+    divergence = 0
+    x_table = np.ndarray((TABLE_SIZE),dtype=np.float)
+    z_table = np.ndarray((TABLE_SIZE),dtype=np.float)
+
+    print "started with the xz tables"
+    
+    for iter in range(0,TABLE_SIZE):
+        xi = iter % 512;
+        yi = iter / 512;
+        xd = (xi + 0.5 - cx)/fx;
+        yd = (yi + 0.5 - cy)/fy;
+        
+        #print iter
+        xu, yu=undistort(xd, yd);
+        x_table[iter] = scaling_factor*xd;
+        z_table[iter] = unambigious_dist/sqrt(xd*xd + yd*yd + 1);    
+    
+    
+    x_table = x_table.reshape(424,512)
+    z_table = z_table.reshape(424,512)
+    
+    print "finished with the xz tables"
+    
+    for y in range (0,424):
+        for x in range (0,512):
+            ir_min = min(min(amps[y,x,0], amps[y,x,1]), amps[y,x,2])
+            ir_sum = amps[y,x,0] + amps[y,x,1] + amps[y,x,2];
+        
+            if ir_min < individual_ab_threshold or ir_sum < ab_threshold:
+                phase[y,x] = 0;            
+            
+            else:
+                
+                t0[y,x]=3*phases[y,x,0]/(2*np.pi)
+                t1[y,x]=15*phases[y,x,1]/(2*np.pi)
+                t2[y,x]=2*phases[y,x,2]/(2*np.pi)
+                
+                t5[y,x] = (floor((t1[y,x] - t0[y,x]) * 0.333333 + 0.5) * 3.0 + t0[y,x]);
+                t3[y,x] = (-t2[y,x] + t5[y,x]);
+                t4[y,x] = t3[y,x] * 2.0;
+                
+                c1= t4[y,x] >= -t4[y,x]
+                
+                #print c1
+                
+                f1=0.0
+                if c1:
+                    f1=2.0
+                    f2=0.5
+                else:
+                    f1=-2.0
+                    f2=-0.5
+                    
+                t3[y,x] =t3[y,x]* f2
+                t3[y,x] = (t3[y,x] - floor(t3[y,x])) * f1
+                
+                c2 = 0.5 < abs(t3[y,x]) and abs(t3[y,x]) < 1.5;
+                
+                #print c2
+                if c2:
+                    t6[y,x]=t5[y,x] + 15.0
+                    t7[y,x]=t1[y,x] + 15.0
+                else:
+                    t6[y,x]=t5[y,x]
+                    t7[y,x]=t1[y,x]
+                    
+                t8[y,x] = (floor((-t2[y,x] + t6[y,x]) * 0.5 + 0.5) * 2.0 + t2[y,x]) * 0.5
+                
+                t6[y,x] =t6[y,x] * 0.333333
+                t7[y,x] =t7[y,x] *0.066667
+                
+                t9[y,x] = (t8[y,x] + t6[y,x] + t7[y,x]); 
+                t10[y,x] = t9[y,x] * 0.333333
+                
+                t6[y,x] =t6[y,x]* 2.0 * np.pi;
+                t7[y,x] =t7[y,x]* 2.0 * np.pi;
+                t8[y,x] =t8[y,x]* 2.0 * np.pi;
+                
+                t8_new[y,x] = t7[y,x] * 0.826977 - t8[y,x] * 0.110264
+                t6_new[y,x] = t8[y,x] * 0.551318 - t6[y,x] * 0.826977
+                t7_new[y,x] = t6[y,x] * 0.110264 - t7[y,x] * 0.551318
+                
+                t8[y,x] = t8_new[y,x];
+                t6[y,x] = t6_new[y,x];
+                t7[y,x] = t7_new[y,x];
+                
+                norm = t8[y,x] * t8[y,x] + t6[y,x] * t6[y,x] + t7[y,x] * t7[y,x];
+                
+                mask=0.0
+                if t9[y,x]>= 0.0:
+                    mask=1.0
+        
+                #print mask
+                t10[y,x] =t10[y,x]* mask;
+                
+                
+                #No need for the slope becuse it is always false
+                ir_max_[y,x] = max(max(amps[y,x,0], amps[y,x,1]), amps[y,x,2]);
+                ir_x[y,x]=ir_max_[y,x]
+                
+                
+                
+                ir_x[y,x] = log(ir_x[y,x]);
+                ir_x[y,x] = (ir_x[y,x] * ab_confidence_slope * 0.301030 + ab_confidence_offset) * 3.321928;
+                ir_x[y,x] = exp(ir_x[y,x]);
+                ir_x[y,x] = min(max_dealias_confidence, max(min_dealias_confidence, ir_x[y,x]));
+                ir_x[y,x] = ir_x[y,x]*ir_x[y,x];
+                
+                mask2=0.0
+                if ir_x[y,x]>= norm:
+                    mask2=1.0
+                    
+                
+                t11[y,x] = t10[y,x] * mask2
+                
+                
+                mask3=0.0
+                if max_dealias_confidence*max_dealias_confidence>= norm:
+                    mask3=1.0
+                t10[y,x] = t10[y,x]*mask3
+                
+                phase[y,x]=t11[y,x]
+            
+            zmultiplier = z_table[y, x]
+            xmultiplier = x_table[y, x]
+            
+            
+            
+            if 0 < phase[y,x]:
+                phase[y,x]=phase[y,x] + phase_offset
+                
+            depth_linear = zmultiplier * phase[y,x] ;
+            max_depth = phase[y,x]  * unambigious_dist * 2;
+            
+            cond1 =  True and (0 < depth_linear) and (0 < max_depth)
+            
+            xmultiplier = (xmultiplier * 90) / (max_depth * max_depth * 8192.0)
+            
+            depth_fit = depth_linear / (-depth_linear * xmultiplier + 1)
+            
+            if depth_fit < 0:
+                depth_fit=0.0
+            else:
+                depth_fit=depth_fit
+              
+            depth_final=0.0
+            if cond1:
+                depth_final=depth_fit
+            else:
+                depth_final=depth_linear
+            
+            
+            depth[y,x]=x_table[y, x]
+            
+            
+                
+   
+    '''
+    residuals[:,:,0]=3*n_0  -15*n_1 - (15*phases[:,:,1]/(2*np.pi) - 3*phases[:,:,0]/(2*np.pi))
+    residuals[:,:,1]=3*n_0  -2*n_2  - (2*phases[:,:,2]/(2*np.pi)  - 3*phases[:,:,0]/(2*np.pi))
+    residuals[:,:,2]=15*n_1 -2*n_2  - (2*phases[:,:,2]/(2*np.pi)  - 15*phases[:,:,1]/(2*np.pi))
+    
+    t1_t0_3=(t1-t0)/3
+    t2_t0=t2-t0
+    t2_t1=t2-t1
+    '''
+    
+    
+    fig_depth = plt.figure()
+    ax2 = fig_depth.add_subplot(131)
+    ax2.set_title("residuals and sum")
+    #ax2.imshow(np.minimum(ir_filtered,np.median(ir_filtered)), cmap='Greens_r')
+    ax2.imshow(depth,cmap='Greys')
+    ax2 = fig_depth.add_subplot(132)
+    ax2.imshow(z_table,cmap='Greys')
+    ax2 = fig_depth.add_subplot(133)
+    ax2.imshow(depth,cmap='Greys')
+    
 #%%
     fig = plt.figure("Phases and Amplitudes")
     ccp = 'Greens'
