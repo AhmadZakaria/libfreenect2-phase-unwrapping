@@ -116,14 +116,14 @@ if __name__ == "__main__" :
     
     
     amplitude_filtered[:,:,0]= np.power (-irpic[0,:,:] * np.sin (p0tables[:,:,0]) - irpic[1,:,:] * np.sin (p0tables[:,:,0] + 2*np.pi/3) - irpic[2,:,:] * np.sin (p0tables[:,:,0] + 4*np.pi/3),2) + np.power (irpic[0,:,:] * np.cos (p0tables[:,:,0]) + irpic[1,:,:] * np.cos (p0tables[:,:,0] + 2*np.pi/3) + irpic[2,:,:] * np.cos (p0tables[:,:,0] + 4*np.pi/3),2) 
-    amplitude_filtered[:,:,1]= np.power (-irpic[3,:,:] * np.sin (p0tables[:,:,0]) - irpic[4,:,:] * np.sin (p0tables[:,:,0] + 2*np.pi/3) - irpic[5,:,:] * np.sin (p0tables[:,:,0] + 4*np.pi/3),2) + np.power (irpic[3,:,:] * np.cos (p0tables[:,:,0]) + irpic[4,:,:] * np.cos (p0tables[:,:,0] + 2*np.pi/3) + irpic[5,:,:] * np.cos (p0tables[:,:,0] + 4*np.pi/3),2) 
-    amplitude_filtered[:,:,2]= np.power (-irpic[6,:,:] * np.sin (p0tables[:,:,0]) - irpic[7,:,:] * np.sin (p0tables[:,:,0] + 2*np.pi/3) - irpic[8,:,:] * np.sin (p0tables[:,:,0] + 4*np.pi/3),2) + np.power (irpic[6,:,:] * np.cos (p0tables[:,:,0]) + irpic[7,:,:] * np.cos (p0tables[:,:,0] + 2*np.pi/3) + irpic[8,:,:] * np.cos (p0tables[:,:,0] + 4*np.pi/3),2)
+    amplitude_filtered[:,:,1]= np.power (-irpic[3,:,:] * np.sin (p0tables[:,:,1]) - irpic[4,:,:] * np.sin (p0tables[:,:,1] + 2*np.pi/3) - irpic[5,:,:] * np.sin (p0tables[:,:,1] + 4*np.pi/3),2) + np.power (irpic[3,:,:] * np.cos (p0tables[:,:,1]) + irpic[4,:,:] * np.cos (p0tables[:,:,1] + 2*np.pi/3) + irpic[5,:,:] * np.cos (p0tables[:,:,1] + 4*np.pi/3),2) 
+    amplitude_filtered[:,:,2]= np.power (-irpic[6,:,:] * np.sin (p0tables[:,:,2]) - irpic[7,:,:] * np.sin (p0tables[:,:,2] + 2*np.pi/3) - irpic[8,:,:] * np.sin (p0tables[:,:,2] + 4*np.pi/3),2) + np.power (irpic[6,:,:] * np.cos (p0tables[:,:,2]) + irpic[7,:,:] * np.cos (p0tables[:,:,2] + 2*np.pi/3) + irpic[8,:,:] * np.cos (p0tables[:,:,2] + 4*np.pi/3),2)
     
     ir_filtered=(amplitude_filtered[:,:,0]+amplitude_filtered[:,:,1]+amplitude_filtered[:,:,2])/3
     
     #ampli_filt=plt.subplot(5,2,2)
     fig = plt.figure()
-    ax1 = fig.add_subplot(221)
+    ax1 = fig.add_subplot(111)
     ax1.set_title("Amplitude composed and filtered")
     ax1.imshow(np.minimum(ir_filtered,np.median(ir_filtered)), cmap='Greens_r')
 
