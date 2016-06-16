@@ -103,13 +103,40 @@ if __name__ == "__main__" :
     final_amplitude3 = 2./3. * np.absolute(pp5+pp6+pp7)
 
 
+
+    #%%    
+    ###ATTEMPT 1 TO CALCULATE WRAPPING COEFICIENTS
+    depth = np.ndarray((424,512,3),dtype=np.float)
+
+
+    #%%
+    ###ATTEMPT 1 to implement bilateral filter on amplitude (page 58 of the good pdf)
+    amplitude_filtered = np.ndarray((424,512,3),dtype=np.float)
+    ir_filtered = np.ndarray((424,512),dtype=np.float)
+    
+    
+    amplitude_filtered[:,:,0]= np.power (-irpic[0,:,:] * np.sin (p0tables[:,:,0]) - irpic[1,:,:] * np.sin (p0tables[:,:,0] + 2*np.pi/3) - irpic[2,:,:] * np.sin (p0tables[:,:,0] + 4*np.pi/3),2) + np.power (irpic[0,:,:] * np.cos (p0tables[:,:,0]) + irpic[1,:,:] * np.cos (p0tables[:,:,0] + 2*np.pi/3) + irpic[2,:,:] * np.cos (p0tables[:,:,0] + 4*np.pi/3),2) 
+    amplitude_filtered[:,:,1]= np.power (-irpic[3,:,:] * np.sin (p0tables[:,:,0]) - irpic[4,:,:] * np.sin (p0tables[:,:,0] + 2*np.pi/3) - irpic[5,:,:] * np.sin (p0tables[:,:,0] + 4*np.pi/3),2) + np.power (irpic[3,:,:] * np.cos (p0tables[:,:,0]) + irpic[4,:,:] * np.cos (p0tables[:,:,0] + 2*np.pi/3) + irpic[5,:,:] * np.cos (p0tables[:,:,0] + 4*np.pi/3),2) 
+    amplitude_filtered[:,:,2]= np.power (-irpic[6,:,:] * np.sin (p0tables[:,:,0]) - irpic[7,:,:] * np.sin (p0tables[:,:,0] + 2*np.pi/3) - irpic[8,:,:] * np.sin (p0tables[:,:,0] + 4*np.pi/3),2) + np.power (irpic[6,:,:] * np.cos (p0tables[:,:,0]) + irpic[7,:,:] * np.cos (p0tables[:,:,0] + 2*np.pi/3) + irpic[8,:,:] * np.cos (p0tables[:,:,0] + 4*np.pi/3),2)
+    
+    ir_filtered=(amplitude_filtered[:,:,0]+amplitude_filtered[:,:,1]+amplitude_filtered[:,:,2])/3
+    
+    #ampli_filt=plt.subplot(5,2,2)
+    fig = plt.figure()
+    ax1 = fig.add_subplot(221)
+    ax1.set_title("Amplitude composed and filtered")
+    ax1.imshow(np.minimum(ir_filtered,np.median(ir_filtered)), cmap='Greens_r')
+
 #%%
     fig = plt.figure("Phases and Amplitudes")
     ccp = 'Greens'
     cca = 'Greens_r'
+    
+    plt.subplots_adjust(wspace=0, hspace=0)  #Remove spaces between subplots
 
     ax = plt.subplot(3,1,1)
     ax.set_title("RGB image")
+    ax.set_axis_off() #Remove axis for better visualization
     plt.imshow(i)
     
 #    for row in range(424):
@@ -123,33 +150,44 @@ if __name__ == "__main__" :
 #        phases[:,col,2] = np.unwrap(phases[:,col,2])
     
     ax = plt.subplot(3,4,5)
-    ax.set_title("Frequency 1 phase-shift")
+    ax.set_axis_off() #Remove axis for better visualization
+    #ax.set_title("Frequency 1 phase-shift")
     plt.imshow((phases[:,:,0]), cmap=ccp)
 
     ax = plt.subplot(3,4,6)
-    ax.set_title("Frequency 2 phase-shift")
+    ax.set_axis_off()
+    #ax.set_title("Frequency 2 phase-shift")
     plt.imshow((phases[:,:,1]), cmap=ccp)
 
     ax = plt.subplot(3,4,7)
-    ax.set_title("Frequency 3 phase-shift")
+    ax.set_axis_off()
+    #ax.set_title("Frequency 3 phase-shift")
     plt.imshow((phases[:,:,2]), cmap=ccp)
     
     ax = plt.subplot(3,4,8)
-    ax.set_title("Composite phases")
+    ax.set_axis_off()
+    #ax.set_title("Composite phases")
     plt.imshow((phases))
 
     ax = plt.subplot(3,4,9)
-    ax.set_title("Frequency 1 Amplitude")
+    ax.set_axis_off()
+    #ax.set_title("Frequency 1 Amplitude")
     plt.imshow(np.minimum(amps[:,:,0],np.median(amps[:,:,0])), cmap=cca)
 
     ax = plt.subplot(3,4,10)
-    ax.set_title("Frequency 2 Amplitude")
+    ax.set_axis_off()
+    #ax.set_title("Frequency 2 Amplitude")
     plt.imshow(np.minimum(amps[:,:,1],np.median(amps[:,:,1])), cmap=cca)
 
     ax = plt.subplot(3,4,11)
-    ax.set_title("Frequency 3 Amplitude")
+    ax.set_axis_off()
+    #ax.set_title("Frequency 3 Amplitude")
     plt.imshow(np.minimum(amps[:,:,2],np.median(amps[:,:,2])), cmap=cca)
     
     ax = plt.subplot(3,4,12)
-    ax.set_title("Composite amplitudes")
+    ax.set_axis_off()
+    #ax.set_title("Composite amplitudes")
     plt.imshow(clrs.rgb_to_hsv(np.minimum(amps,np.median(amps))))
+    
+    
+
