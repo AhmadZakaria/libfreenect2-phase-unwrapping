@@ -33,6 +33,7 @@
 #include <limits>
 #include <cmath>
 #include <cstdlib>
+#include <iostream>
 #define WRITE_LIBUSB_ERROR(__RESULT) libusb_error_name(__RESULT) << " " << libusb_strerror((libusb_error)__RESULT)
 
 #include <libfreenect2/libfreenect2.hpp>
@@ -115,6 +116,8 @@ struct IrCameraTables: Freenect2Device::IrCameraParams
     {
       size_t xi = i % 512;
       size_t yi = i / 512;
+//      std::cout<< "cx: " << cx << ", fx: " << fx << ", cy: " <<cy <<", fy: " << fy <<std::endl;
+//      exit(255);
       double xd = (xi + 0.5 - cx)/fx;
       double yd = (yi + 0.5 - cy)/fy;
       double xu, yu;
@@ -174,6 +177,10 @@ struct IrCameraTables: Freenect2Device::IrCameraParams
       double Jb = 6*k3*x*y*x2y22 + 4*k2*x*y*x2y2 + 2*k1*x*y + 2*p1*x + 2*p2*y;
       double Jc = Jb;
       double Jd = k3*x2y23 + (k2+6*k3*y2)*x2y22 + (k1+4*k2*y2)*x2y2 + 2*k1*y2 + 2*p2*x + 6*p1*y + 1;
+
+//      std::cout<< "k1: " << k1 << ", k2: " << k2 << ", k3: " <<k3 << std::endl;
+//      std::cout << "p1: " << p1 << ", p2: " << p2 <<std::endl;
+//      exit(255);
 
       //Inverse Jacobian
       double Jdet = 1/(Ja*Jd - Jb*Jc);

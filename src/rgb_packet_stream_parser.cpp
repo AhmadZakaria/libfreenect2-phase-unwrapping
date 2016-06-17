@@ -147,21 +147,21 @@ void RgbPacketStreamParser::onDataReceived(unsigned char* buffer, size_t length)
         fb.length = 0;
         return;
       }
-      FILE* pFile;
+//      FILE* pFile;
 
-      timeval curTime;
-      gettimeofday(&curTime, NULL);
-      int milli = curTime.tv_usec / 1000;
+//      timeval curTime;
+//      gettimeofday(&curTime, NULL);
+//      int milli = curTime.tv_usec / 1000;
 
-      char buffer [80];
-      strftime(buffer, 80, "%Y%m%d-%H%M%S", localtime(&curTime.tv_sec));
+//      char buffer [80];
+//      strftime(buffer, 80, "%Y%m%d-%H%M%S", localtime(&curTime.tv_sec));
 
-      char currentTime[84] = "";
-      sprintf(currentTime, "data/%s%d.rgb", buffer, milli);
+//      char currentTime[84] = "";
+//      sprintf(currentTime, "data/%s%d.rgb", buffer, milli);
 
-        pFile = fopen(currentTime, "wr");
-      fwrite(raw_packet->jpeg_buffer, sizeof(unsigned char), jpeg_length, pFile);
-      fclose(pFile);
+//        pFile = fopen(currentTime, "wr");
+//      fwrite(raw_packet->jpeg_buffer, sizeof(unsigned char), jpeg_length, pFile);
+//      fclose(pFile);
       // can the processor handle the next image?
       if(processor_->ready())
       {

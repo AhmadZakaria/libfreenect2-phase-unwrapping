@@ -911,31 +911,31 @@ void CpuDepthPacketProcessor::process(const DepthPacket &packet)
 
   float *m_ptr = (m.ptr(0, 0)->val);
 //decodePixelMeasurement(data, 0, x, y);
-  FILE* pFile;
+//  FILE* pFile;
 
-  timeval curTime;
-  gettimeofday(&curTime, NULL);
-  int milli = curTime.tv_usec / 1000;
+//  timeval curTime;
+//  gettimeofday(&curTime, NULL);
+//  int milli = curTime.tv_usec / 1000;
 
-  char buffer [80];
-  strftime(buffer, 80, "%Y%m%d-%H%M%S", localtime(&curTime.tv_sec));
+//  char buffer [80];
+//  strftime(buffer, 80, "%Y%m%d-%H%M%S", localtime(&curTime.tv_sec));
 
-  char currentTime[84] = "";
-  sprintf(currentTime, "data/%s%d.ir", buffer, milli);
+//  char currentTime[84] = "";
+//  sprintf(currentTime, "data/%s%d.ir", buffer, milli);
 
-    pFile = fopen(currentTime, "wr");
-    int counter = 0;
-    for (int img = 0; img < 9; ++img)
-        for(int y = 0; y < 424; ++y)
-            for(int x = 0; x < 512; ++x)
-            {
-                int32_t pixel = impl_->decodePixelMeasurement(packet.buffer, img, x, y);
-                fwrite(&pixel, sizeof(int32_t), 1, pFile);
-                counter++;
-          }
-  std::cout<<"counter"<<counter<<std::endl;
-  fclose(pFile);
-//exit(255);
+//    pFile = fopen(currentTime, "wr");
+//    int counter = 0;
+//    for (int img = 0; img < 9; ++img)
+//        for(int y = 0; y < 424; ++y)
+//            for(int x = 0; x < 512; ++x)
+//            {
+//                int32_t pixel = impl_->decodePixelMeasurement(packet.buffer, img, x, y);
+//                fwrite(&pixel, sizeof(int32_t), 1, pFile);
+//                counter++;
+//          }
+//  std::cout<<"counter"<<counter<<std::endl;
+//  fclose(pFile);
+////exit(255);
 
 
 
