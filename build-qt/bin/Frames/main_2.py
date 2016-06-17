@@ -16,7 +16,8 @@ from skimage.restoration import unwrap_phase
 from skimage import exposure
 from skimage import filter
 
-
+ccp = 'Greys_r'
+cca = 'Greens_r'
 
 
 if __name__ == "__main__" :
@@ -31,7 +32,7 @@ if __name__ == "__main__" :
         p0tables = np.flipud(p0tables.reshape((424,512,3)))
         print p0tables.shape
 
-    with open("decodedIR", "rb") as f2:
+    with open("20160616-120945411.ir", "rb") as f2:
        plt.figure("Raw data")
        irpic = np.fromfile(f2, dtype=np.int32)
        print (irpic.shape)
@@ -40,7 +41,7 @@ if __name__ == "__main__" :
 
        plt.subplot(4,1,1)
 
-       i = imread("dumprgb12.jpeg")
+       i = imread("20160616-120945332.rgb")
 
 
        plt.imshow(i)
@@ -56,7 +57,7 @@ if __name__ == "__main__" :
    
     
     #%%    
-    ### ACCORDING TO PATENT
+    ### ACCORDING TO PATENT, Phases and amplitudes
     phases = np.ndarray((424,512,3),dtype=np.float)
     amps   = np.ndarray((424,512,3),dtype=np.float)
 
@@ -80,13 +81,30 @@ if __name__ == "__main__" :
     amps[:,:,2]=np.sqrt(np.square(second_term)+np.square(first_term))/2.
     
     
-    amps[:,:,0]=np.minimum(amps[:,:,0],np.median(amps[:,:,0]))
-    amps[:,:,1]=np.minimum(amps[:,:,1],np.median(amps[:,:,1]))
-    amps[:,:,2]=np.minimum(amps[:,:,2],np.median(amps[:,:,2]))
+    #calculate the corrected amplitude according to https://hal.inria.fr/hal-00725654/PDF/TOF.pdf
+    distance   = np.ndarray((424,512,3),dtype=np.float)
     
+    distance[:,:,0]=csts.c*phases[:,:,0]/(4*np.pi*16)
+    distance[:,:,1]=csts.c*phases[:,:,1]/(4*np.pi*80)
+    distance[:,:,2]=csts.c*phases[:,:,2]/(4*np.pi*120)
+#    
+#    amps[:,:,0]=amps[:,:,0]*np.power(distance[:,:,0],2)
+#    amps[:,:,1]=amps[:,:,1]*np.power(distance[:,:,1],2)
+#    amps[:,:,2]=amps[:,:,2]*np.power(distance[:,:,2],2)
+    
+#    amps[:,:,0]=np.minimum(amps[:,:,0],np.median(amps[:,:,0]))
+#    amps[:,:,1]=np.minimum(amps[:,:,1],np.median(amps[:,:,1]))
+#    amps[:,:,2]=np.minimum(amps[:,:,2],np.median(amps[:,:,2]))
+#    
 #    amps[:,:,0] = exposure.equalize_hist(amps[:,:,0])    
 #    amps[:,:,1] = exposure.equalize_hist(amps[:,:,1])    
-#    amps[:,:,2] = exposure.equalize_hist(amps[:,:,2])    
+#    amps[:,:,2] = exposure.equalize_hist(amps[:,:,2]) 
+    
+#    amps[:,:,0]=distance[:,:,0]
+#    amps[:,:,1]=distance[:,:,1]
+#    amps[:,:,2]=distance[:,:,2]
+    
+    
 
     ### END ACCORDING TO PATENT
 
@@ -180,10 +198,11 @@ if __name__ == "__main__" :
     
     
     amplitude_filtered[:,:,0]= np.power (-irpic[0,:,:] * np.sin (p0tables[:,:,0]) - irpic[1,:,:] * np.sin (p0tables[:,:,0] + 2*np.pi/3) - irpic[2,:,:] * np.sin (p0tables[:,:,0] + 4*np.pi/3),2) + np.power (irpic[0,:,:] * np.cos (p0tables[:,:,0]) + irpic[1,:,:] * np.cos (p0tables[:,:,0] + 2*np.pi/3) + irpic[2,:,:] * np.cos (p0tables[:,:,0] + 4*np.pi/3),2) 
-    amplitude_filtered[:,:,1]= np.power (-irpic[3,:,:] * np.sin (p0tables[:,:,0]) - irpic[4,:,:] * np.sin (p0tables[:,:,0] + 2*np.pi/3) - irpic[5,:,:] * np.sin (p0tables[:,:,0] + 4*np.pi/3),2) + np.power (irpic[3,:,:] * np.cos (p0tables[:,:,0]) + irpic[4,:,:] * np.cos (p0tables[:,:,0] + 2*np.pi/3) + irpic[5,:,:] * np.cos (p0tables[:,:,0] + 4*np.pi/3),2) 
-    amplitude_filtered[:,:,2]= np.power (-irpic[6,:,:] * np.sin (p0tables[:,:,0]) - irpic[7,:,:] * np.sin (p0tables[:,:,0] + 2*np.pi/3) - irpic[8,:,:] * np.sin (p0tables[:,:,0] + 4*np.pi/3),2) + np.power (irpic[6,:,:] * np.cos (p0tables[:,:,0]) + irpic[7,:,:] * np.cos (p0tables[:,:,0] + 2*np.pi/3) + irpic[8,:,:] * np.cos (p0tables[:,:,0] + 4*np.pi/3),2)
+    amplitude_filtered[:,:,1]= np.power (-irpic[3,:,:] * np.sin (p0tables[:,:,1]) - irpic[4,:,:] * np.sin (p0tables[:,:,1] + 2*np.pi/3) - irpic[5,:,:] * np.sin (p0tables[:,:,1] + 4*np.pi/3),2) + np.power (irpic[3,:,:] * np.cos (p0tables[:,:,1]) + irpic[4,:,:] * np.cos (p0tables[:,:,1] + 2*np.pi/3) + irpic[5,:,:] * np.cos (p0tables[:,:,1] + 4*np.pi/3),2) 
+    amplitude_filtered[:,:,2]= np.power (-irpic[6,:,:] * np.sin (p0tables[:,:,2]) - irpic[7,:,:] * np.sin (p0tables[:,:,2] + 2*np.pi/3) - irpic[8,:,:] * np.sin (p0tables[:,:,2] + 4*np.pi/3),2) + np.power (irpic[6,:,:] * np.cos (p0tables[:,:,2]) + irpic[7,:,:] * np.cos (p0tables[:,:,2] + 2*np.pi/3) + irpic[8,:,:] * np.cos (p0tables[:,:,2] + 4*np.pi/3),2)
     
-    ir_filtered=(amplitude_filtered[:,:,0]+amplitude_filtered[:,:,1]+amplitude_filtered[:,:,2])/3
+    #ir_filtered=(amplitude_filtered[:,:,0]+amplitude_filtered[:,:,1]+amplitude_filtered[:,:,2])/3
+    ir_filtered=(amps[:,:,0]+amps[:,:,1]+amps[:,:,2])/3
     
     #ampli_filt=plt.subplot(5,2,2)
     fig = plt.figure()
@@ -192,8 +211,8 @@ if __name__ == "__main__" :
     
     
     #ir_filtered = exposure.equalize_hist(ir_filtered)   
-    ir_filtered=np.minimum(ir_filtered,np.median(ir_filtered))
-    ax1.imshow(ir_filtered, cmap='Greys_r')
+    #ir_filtered=np.minimum(ir_filtered,np.mean(ir_filtered))
+    ax1.imshow(ir_filtered, cmap='Greens_r')
     
     
     #print ir_filtered
@@ -658,8 +677,13 @@ if __name__ == "__main__" :
             
             else:
                 
-                t0[y,x]=3*phases[y,x,0]/(2*np.pi)
-                t1[y,x]=15*phases[y,x,1]/(2*np.pi)
+                #I believe the initial guess of t0.t1 and t2 are not correct since the oder is may be 80, 16 and then 120 mhz
+#                t0[y,x]=3*phases[y,x,0]/(2*np.pi)
+#                t1[y,x]=15*phases[y,x,1]/(2*np.pi)
+#                t2[y,x]=2*phases[y,x,2]/(2*np.pi)
+                
+                t0[y,x]=3*phases[y,x,1]/(2*np.pi)
+                t1[y,x]=15*phases[y,x,0]/(2*np.pi)
                 t2[y,x]=2*phases[y,x,2]/(2*np.pi)
                 
                 t5[y,x] = (floor((t1[y,x] - t0[y,x]) * 0.333333 + 0.5) * 3.0 + t0[y,x]);
@@ -807,12 +831,11 @@ if __name__ == "__main__" :
     
 #%%
     fig = plt.figure("Phases and Amplitudes")
-    ccp = 'Greys_r'
-    cca = 'Greens_r'
+    
     
     plt.subplots_adjust(wspace=0, hspace=0)  #Remove spaces between subplots
 
-    ax = plt.subplot(3,1,1)
+    ax = plt.subplot(4,1,1)
     ax.set_title("RGB image")
     ax.set_axis_off() #Remove axis for better visualization
     plt.imshow(i)
@@ -836,55 +859,88 @@ if __name__ == "__main__" :
 #    phases[:,:,2]=filter.denoise_bilateral(abs(phases[:,:,2]), sigma_range=0.05, sigma_spatial=5)
     
     
-    phases[:,:,0] = unwrap_phase(phases[:,:,0])
-    phases[:,:,1] = unwrap_phase(phases[:,:,1])
-    phases[:,:,2] = unwrap_phase(phases[:,:,2])
+    
 
-    phases[:,:,0] = exposure.equalize_hist(phases[:,:,0])    
-    phases[:,:,1] = exposure.equalize_hist(phases[:,:,1])
-    phases[:,:,2] = exposure.equalize_hist(phases[:,:,2])
+#    phases[:,:,0] = exposure.equalize_hist(phases[:,:,0])    
+#    phases[:,:,1] = exposure.equalize_hist(phases[:,:,1])
+#    phases[:,:,2] = exposure.equalize_hist(phases[:,:,2])
     
     
     
-    ax = plt.subplot(3,4,5)
+    ax = plt.subplot(4,4,5)
     ax.set_axis_off() #Remove axis for better visualization
     #ax.set_title("Frequency 1 phase-shift")
     plt.imshow((phases[:,:,0]), cmap=ccp)
 
-    ax = plt.subplot(3,4,6)
+    ax = plt.subplot(4,4,6)
     ax.set_axis_off()
     #ax.set_title("Frequency 2 phase-shift")
     plt.imshow((phases[:,:,1]), cmap=ccp)
 
-    ax = plt.subplot(3,4,7)
+    ax = plt.subplot(4,4,7)
     ax.set_axis_off()
     #ax.set_title("Frequency 3 phase-shift")
     plt.imshow((phases[:,:,2]), cmap=ccp)
     
-    ax = plt.subplot(3,4,8)
+    ax = plt.subplot(4,4,8)
     ax.set_axis_off()
     #ax.set_title("Composite phases")
     plt.imshow(( (phases[:,:,0]+phases[:,:,1]+phases[:,:,2])/3 ))
 
-    ax = plt.subplot(3,4,9)
+    ax = plt.subplot(4,4,9)
     ax.set_axis_off()
     #ax.set_title("Frequency 1 Amplitude")
     plt.imshow(amps[:,:,0], cmap=cca)
 
-    ax = plt.subplot(3,4,10)
+    ax = plt.subplot(4,4,10)
     ax.set_axis_off()
     #ax.set_title("Frequency 2 Amplitude")
     plt.imshow(amps[:,:,1], cmap=cca)
 
-    ax = plt.subplot(3,4,11)
+    ax = plt.subplot(4,4,11)
     ax.set_axis_off()
     #ax.set_title("Frequency 3 Amplitude")
     plt.imshow(amps[:,:,2], cmap=cca)
     
-    ax = plt.subplot(3,4,12)
+    ax = plt.subplot(4,4,12)
     ax.set_axis_off()
     #ax.set_title("Composite amplitudes")
     plt.imshow(clrs.rgb_to_hsv(np.minimum(amps,np.median(amps))))
+    
+    
+    
+    #Showing the unrwapped ones
+    phases_unwrapped = np.ndarray((424,512,3),dtype=np.float)
+    phases_unwrapped[:,:,0] = unwrap_phase(phases[:,:,0])
+    phases_unwrapped[:,:,1] = unwrap_phase(phases[:,:,1])
+    phases_unwrapped[:,:,2] = unwrap_phase(phases[:,:,2])
+    
+    phases_unwrapped[:,:,0] = exposure.equalize_hist(phases_unwrapped[:,:,0])    
+    phases_unwrapped[:,:,1] = exposure.equalize_hist(phases_unwrapped[:,:,1])
+    phases_unwrapped[:,:,2] = exposure.equalize_hist(phases_unwrapped[:,:,2])
+    
+    
+    
+    
+    ax = plt.subplot(4,4,13)
+    ax.set_axis_off()
+    #ax.set_title("Composite amplitudes")
+    plt.imshow(phases_unwrapped[:,:,0], cmap=ccp)
+    
+    ax = plt.subplot(4,4,14)
+    ax.set_axis_off()
+    #ax.set_title("Composite amplitudes")
+    plt.imshow(phases_unwrapped[:,:,1], cmap=ccp)
+    
+    ax = plt.subplot(4,4,15)
+    ax.set_axis_off()
+    #ax.set_title("Composite amplitudes")
+    plt.imshow(phases_unwrapped[:,:,2], cmap=ccp)
+    
+    ax = plt.subplot(4,4,16)
+    ax.set_axis_off()
+    #ax.set_title("Composite amplitudes")
+    plt.imshow(( (phases_unwrapped[:,:,0]+phases_unwrapped[:,:,1]+phases_unwrapped[:,:,2])/3 ))
     
     
 
