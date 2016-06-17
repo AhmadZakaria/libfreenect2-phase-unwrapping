@@ -4,6 +4,7 @@ Created on Mon Jun 13 12:32:36 2016
 
 @author: ahmad
 '''
+import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import matplotlib.colors as clrs
@@ -11,6 +12,8 @@ from scipy.misc import imread
 import scipy.constants as csts
 import numpy as np
 from math import atan2, sin, cos
+from skimage import data, img_as_float
+from skimage import exposure
 
 
 
@@ -28,7 +31,7 @@ if __name__ == "__main__" :
         print p0tables.shape
 
 #    with open("decodedIR", "rb") as f2:
-    with open("../data/20160616-105203747.ir", "rb") as f2:
+    with open("../data/20160616-120946344.ir", "rb") as f2:
        plt.figure("Raw data")
        irpic = np.fromfile(f2, dtype=np.int32)
        print (irpic.shape)
@@ -38,7 +41,7 @@ if __name__ == "__main__" :
        plt.subplot(4,1,1)
 
 #       i = imread("dumprgb12.jpeg")
-       i = imread("../data/20160616-105203734.rgb")
+       i = imread("../data/20160616-120946332.rgb")
 
 
        plt.imshow(i)
@@ -122,10 +125,10 @@ if __name__ == "__main__" :
     ir_filtered=(amplitude_filtered[:,:,0]+amplitude_filtered[:,:,1]+amplitude_filtered[:,:,2])/3
     
     #ampli_filt=plt.subplot(5,2,2)
-    fig = plt.figure()
+    fig = plt.figure("Amplitude composed and filtered")
     ax1 = fig.add_subplot(111)
     ax1.set_title("Amplitude composed and filtered")
-    ax1.imshow(np.minimum(ir_filtered,np.median(ir_filtered)), cmap='Greens_r')
+    ax1.imshow(np.minimum(ir_filtered,np.mean(ir_filtered)), cmap='Greens_r')
 
 #%%
     fig = plt.figure("Phases and Amplitudes")
