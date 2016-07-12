@@ -10,128 +10,127 @@ import matplotlib.colors as clrs
 from scipy.misc import imread
 import scipy.constants as csts
 import numpy as np
-from math import atan2, sin, cos, floor ,fabs ,log ,exp, sqrt
+from math import atan2, sin, cos, floor, fabs, log, exp, sqrt
+from testing_sawtooth import *
 
 from skimage.restoration import unwrap_phase
 from skimage import exposure
 from skimage import filter
+from scipy.signal import medfilt
 
 ccp = 'Greys_r'
 cca = 'Greens_r'
 
-
-if __name__ == "__main__" :
+if __name__ == "__main__":
     print "started"
 
-#    f = open("/home/ahmad/Documents/Masters/Computational-Photography/project/libfreenect2/build-qt/bin/Frames/tab11to16.dat", "r")
-#    a = np.fromfile(f, dtype=np.uint16)
-#    print a
+    #    f = open("/home/ahmad/Documents/Masters/Computational-Photography/project/libfreenect2/build-qt/bin/Frames/tab11to16.dat", "r")
+    #    a = np.fromfile(f, dtype=np.uint16)
+    #    print a
 
     with open("p0tables.dat", "rb") as p0tf:
         p0tables = np.fromfile(p0tf, dtype=np.uint16)
-        p0tables = np.flipud(p0tables.reshape((424,512,3)))
+        p0tables = np.flipud(p0tables.reshape((424, 512, 3)))
         print p0tables.shape
 
-#    with open("decodedIR", "rb") as f2:
+    # with open("decodedIR", "rb") as f2:
     with open("../data/20160616-120946344.ir", "rb") as f2:
-       plt.figure("Raw data")
-       irpic = np.fromfile(f2, dtype=np.int32)
-       print (irpic.shape)
-       irpic = (abs(((irpic.reshape((9,424,512))))))
-       print (irpic.shape)
+        plt.figure("Raw data")
+        irpic = np.fromfile(f2, dtype=np.int32)
+        print (irpic.shape)
+        irpic = (abs(((irpic.reshape((9, 424, 512))))))
+        print (irpic.shape)
 
-       plt.subplot(4,1,1)
+        ax = plt.subplot(4, 1, 1)
 
-#       i = imread("dumprgb12.jpeg")
-       i = imread("../data/20160616-120946332.rgb")
+        #       i = imread("dumprgb12.jpeg")
+        i = imread("../data/20160616-120946332.rgb")
 
+        ax.set_axis_off()
 
-       plt.imshow(i)
-       counter = 4
-       for row in range(2,5):
-           for col in range(2,5):
-               # flip once 
-               irpic[counter-4][:][:] = np.flipud(irpic[counter-4][:][:])
-               plt.subplot(4, 3, counter)
-               plt.imshow(np.minimum(irpic[counter-4][:][:],np.mean(irpic[counter-4][:][:])))
-               counter = counter +1
+        plt.imshow(i)
+        counter = 4
+        for row in range(2, 5):
+            for col in range(2, 5):
+                # flip once
+                irpic[counter - 4][:][:] = np.flipud(irpic[counter - 4][:][:])
+                ax = plt.subplot(4, 3, counter)
+                ax.set_axis_off()
+                plt.imshow(np.minimum(irpic[counter - 4][:][:], np.mean(irpic[counter - 4][:][:])), cmap='inferno')
+                counter = counter + 1
 
-   
-    
-    #%%    
+    # %%
     ### ACCORDING TO PATENT, Phases and amplitudes
-    phases = np.ndarray((424,512,3),dtype=np.float)
-    amps   = np.ndarray((424,512,3),dtype=np.float)
+    phases = np.ndarray((424, 512, 3), dtype=np.float)
+    amps = np.ndarray((424, 512, 3), dtype=np.float)
 
-    
-    first_term = irpic[0,:,:] * np.sin (0) + irpic[1,:,:] * np.sin (2*np.pi/3) + irpic[2,:,:] * np.sin(4*np.pi/3) 
-    second_term = irpic[0,:,:] * np.cos(0) + irpic[1,:,:] * np.cos(2*np.pi/3) +  irpic[2,:,:] * np.cos(4*np.pi/3) 
-    
-    phases[:,:,0]=np.arctan2(-first_term,second_term)
-    amps[:,:,0]=np.sqrt(np.square(second_term)+np.square(first_term))/2.
-    
-    first_term = irpic[3,:,:] * sin (0) + irpic[4,:,:] * sin (2*np.pi/3) + irpic[5,:,:] * sin(4*np.pi/3) 
-    second_term = irpic[3,:,:] * cos(0) + irpic[4,:,:] * cos(2*np.pi/3) +  irpic[5,:,:] * cos(4*np.pi/3) 
-    
-    phases[:,:,1]=np.arctan2(-(first_term),(second_term))
-    amps[:,:,1]=np.sqrt(np.square(second_term)+np.square(first_term))/2.
-    
-    first_term = irpic[6,:,:] * sin (0) + irpic[7,:,:] * sin (2*np.pi/3) + irpic[8,:,:] * sin(4*np.pi/3) 
-    second_term = irpic[6,:,:] * cos(0) + irpic[7,:,:] * cos(2*np.pi/3) +  irpic[8,:,:] * cos(4*np.pi/3) 
-    
-    phases[:,:,2]=np.arctan2(-(first_term),(second_term))
-    amps[:,:,2]=np.sqrt(np.square(second_term)+np.square(first_term))/2.
-    #calculate the corrected amplitude according to https://hal.inria.fr/hal-00725654/PDF/TOF.pdf
-    distance   = np.ndarray((424,512,3),dtype=np.float)
-    
-    distance[:,:,0]=csts.c*phases[:,:,0]/(4*np.pi*16)
-    distance[:,:,1]=csts.c*phases[:,:,1]/(4*np.pi*80)
-    distance[:,:,2]=csts.c*phases[:,:,2]/(4*np.pi*120)
-#    
-#    amps[:,:,0]=amps[:,:,0]*np.power(distance[:,:,0],2)
-#    amps[:,:,1]=amps[:,:,1]*np.power(distance[:,:,1],2)
-#    amps[:,:,2]=amps[:,:,2]*np.power(distance[:,:,2],2)
-    
-#    amps[:,:,0]=np.minimum(amps[:,:,0],np.median(amps[:,:,0]))
-#    amps[:,:,1]=np.minimum(amps[:,:,1],np.median(amps[:,:,1]))
-#    amps[:,:,2]=np.minimum(amps[:,:,2],np.median(amps[:,:,2]))
-#    
-#    amps[:,:,0] = exposure.equalize_hist(amps[:,:,0])    
-#    amps[:,:,1] = exposure.equalize_hist(amps[:,:,1])    
-#    amps[:,:,2] = exposure.equalize_hist(amps[:,:,2]) 
-    
-#    amps[:,:,0]=distance[:,:,0]
-#    amps[:,:,1]=distance[:,:,1]
-#    amps[:,:,2]=distance[:,:,2]
+    first_term = irpic[0, :, :] * np.sin(0) + irpic[1, :, :] * np.sin(2 * np.pi / 3) + irpic[2, :, :] * np.sin(
+        4 * np.pi / 3)
+    second_term = irpic[0, :, :] * np.cos(0) + irpic[1, :, :] * np.cos(2 * np.pi / 3) + irpic[2, :, :] * np.cos(
+        4 * np.pi / 3)
+
+    phases[:, :, 0] = np.arctan2(-first_term, second_term)
+    amps[:, :, 0] = np.sqrt(np.square(second_term) + np.square(first_term)) / 2.
+
+    first_term = irpic[3, :, :] * sin(0) + irpic[4, :, :] * sin(2 * np.pi / 3) + irpic[5, :, :] * sin(4 * np.pi / 3)
+    second_term = irpic[3, :, :] * cos(0) + irpic[4, :, :] * cos(2 * np.pi / 3) + irpic[5, :, :] * cos(4 * np.pi / 3)
+
+    phases[:, :, 1] = np.arctan2(-(first_term), (second_term))
+    amps[:, :, 1] = np.sqrt(np.square(second_term) + np.square(first_term)) / 2.
+
+    first_term = irpic[6, :, :] * sin(0) + irpic[7, :, :] * sin(2 * np.pi / 3) + irpic[8, :, :] * sin(4 * np.pi / 3)
+    second_term = irpic[6, :, :] * cos(0) + irpic[7, :, :] * cos(2 * np.pi / 3) + irpic[8, :, :] * cos(4 * np.pi / 3)
+
+    phases[:, :, 2] = np.arctan2(-(first_term), (second_term))
+    amps[:, :, 2] = np.sqrt(np.square(second_term) + np.square(first_term)) / 2.
+    # calculate the corrected amplitude according to https://hal.inria.fr/hal-00725654/PDF/TOF.pdf
+    distance = np.ndarray((424, 512, 3), dtype=np.float)
+
+    distance[:, :, 0] = csts.c * phases[:, :, 0] / (4 * np.pi * 80)
+    distance[:, :, 1] = csts.c * phases[:, :, 1] / (4 * np.pi * 16)
+    distance[:, :, 2] = csts.c * phases[:, :, 2] / (4 * np.pi * 120)
+    #
+    #    amps[:,:,0]=amps[:,:,0]*np.power(distance[:,:,0],2)
+    #    amps[:,:,1]=amps[:,:,1]*np.power(distance[:,:,1],2)
+    #    amps[:,:,2]=amps[:,:,2]*np.power(distance[:,:,2],2)
+
+    #    amps[:,:,0]=np.minimum(amps[:,:,0],np.median(amps[:,:,0]))
+    #    amps[:,:,1]=np.minimum(amps[:,:,1],np.median(amps[:,:,1]))
+    #    amps[:,:,2]=np.minimum(amps[:,:,2],np.median(amps[:,:,2]))
+    #
+    #    amps[:,:,0] = exposure.equalize_hist(amps[:,:,0])
+    #    amps[:,:,1] = exposure.equalize_hist(amps[:,:,1])
+    #    amps[:,:,2] = exposure.equalize_hist(amps[:,:,2])
+
+    #    amps[:,:,0]=distance[:,:,0]
+    #    amps[:,:,1]=distance[:,:,1]
+    #    amps[:,:,2]=distance[:,:,2]
     ### END ACCORDING TO PATENT
 
-#%%
+    # %%
 
-    pp0 = ((irpic[0,:,:]*np.exp(-1j*(p0tables[:,:,0]))))
-    pp1 = ((irpic[1,:,:]*np.exp(-1j*(p0tables[:,:,0]+2*np.pi*2/3))))
-    pp2 = ((irpic[2,:,:]*np.exp(-1j*(p0tables[:,:,0]+2*np.pi*4/3))))
-    final_phase1 = - np.angle(pp0+pp1+pp2);
-    
-    
-    pp3 = ((irpic[3,:,:]*np.exp(-1j*(p0tables[:,:,1]))))
-    pp4 = ((irpic[4,:,:]*np.exp(-1j*(p0tables[:,:,1]+2*np.pi*2/3))))
-    pp5 = ((irpic[5,:,:]*np.exp(-1j*(p0tables[:,:,1]+2*np.pi*4/3))))
-#    print - np.angle(pp3+pp4+pp5)
-#    final_phase2 = - np.angle(pp3+pp4+pp5);
+    pp0 = ((irpic[0, :, :] * np.exp(-1j * (p0tables[:, :, 0]))))
+    pp1 = ((irpic[1, :, :] * np.exp(-1j * (p0tables[:, :, 0] + 2 * np.pi * 1. / 3))))
+    pp2 = ((irpic[2, :, :] * np.exp(-1j * (p0tables[:, :, 0] + 2 * np.pi * 2. / 3))))
+    phases[:, :, 0] = - np.angle(pp0 + pp1 + pp2);
 
-    pp6 = ((irpic[6,:,:]*np.exp(-1j*(p0tables[:,:,2]))))
-    pp7 = ((irpic[7,:,:]*np.exp(-1j*(p0tables[:,:,2]+2*np.pi*2/3))))
-    pp8 = ((irpic[8,:,:]*np.exp(-1j*(p0tables[:,:,2]+2*np.pi*4/3))))
-#    print - np.angle(pp0+pp1+pp2)
-#    final_phase3 = - np.angle(pp6+pp7+pp8);
+    pp3 = ((irpic[3, :, :] * np.exp(-1j * (p0tables[:, :, 1]))))
+    pp4 = ((irpic[4, :, :] * np.exp(-1j * (p0tables[:, :, 1] + 2 * np.pi * 1. / 3))))
+    pp5 = ((irpic[5, :, :] * np.exp(-1j * (p0tables[:, :, 1] + 2 * np.pi * 2. / 3))))
+    #    print - np.angle(pp3+pp4+pp5)
+    phases[:, :, 1] = - np.angle(pp3+pp4+pp5);
 
-    final_amplitude1 = 2./3. * np.absolute(pp0+pp1+pp2)
-    final_amplitude2 = 2./3. * np.absolute(pp2+pp3+pp4)
-    final_amplitude3 = 2./3. * np.absolute(pp5+pp6+pp7)
+    pp6 = ((irpic[6, :, :] * np.exp(-1j * (p0tables[:, :, 2]))))
+    pp7 = ((irpic[7, :, :] * np.exp(-1j * (p0tables[:, :, 2] + 2 * np.pi * 1. / 3))))
+    pp8 = ((irpic[8, :, :] * np.exp(-1j * (p0tables[:, :, 2] + 2 * np.pi * 2. / 3))))
+    #    print - np.angle(pp0+pp1+pp2)
+    phases[:, :, 2] = - np.angle(pp6+pp7+pp8);
 
+    amps[:, :, 0] = 2. / 3. * np.absolute(pp0 + pp1 + pp2)
+    amps[:, :, 1] = 2. / 3. * np.absolute(pp2 + pp3 + pp4)
+    amps[:, :, 2] = 2. / 3. * np.absolute(pp5 + pp6 + pp7)
 
-
-    #%%    
+    # %%
     ###ATTEMPT 1 TO CALCULATE WRAPPING COEFICIENTS
     '''
     depth = np.ndarray((424,512),dtype=np.float)
@@ -188,31 +187,44 @@ if __name__ == "__main__" :
     ax2.imshow(n_0chosen,cmap='Greys')
     '''
 
-    #%%
+    # %%
     ###ATTEMPT 1 to implement bilateral filter on amplitude (page 58 of the good pdf)
-    amplitude_filtered = np.ndarray((424,512,3),dtype=np.float)
-    ir_filtered = np.ndarray((424,512),dtype=np.float)
-    
-    
-    amplitude_filtered[:,:,0]= np.power (-irpic[0,:,:] * np.sin (p0tables[:,:,0]) - irpic[1,:,:] * np.sin (p0tables[:,:,0] + 2*np.pi/3) - irpic[2,:,:] * np.sin (p0tables[:,:,0] + 4*np.pi/3),2) + np.power (irpic[0,:,:] * np.cos (p0tables[:,:,0]) + irpic[1,:,:] * np.cos (p0tables[:,:,0] + 2*np.pi/3) + irpic[2,:,:] * np.cos (p0tables[:,:,0] + 4*np.pi/3),2) 
-    amplitude_filtered[:,:,1]= np.power (-irpic[3,:,:] * np.sin (p0tables[:,:,1]) - irpic[4,:,:] * np.sin (p0tables[:,:,1] + 2*np.pi/3) - irpic[5,:,:] * np.sin (p0tables[:,:,1] + 4*np.pi/3),2) + np.power (irpic[3,:,:] * np.cos (p0tables[:,:,1]) + irpic[4,:,:] * np.cos (p0tables[:,:,1] + 2*np.pi/3) + irpic[5,:,:] * np.cos (p0tables[:,:,1] + 4*np.pi/3),2) 
-    amplitude_filtered[:,:,2]= np.power (-irpic[6,:,:] * np.sin (p0tables[:,:,2]) - irpic[7,:,:] * np.sin (p0tables[:,:,2] + 2*np.pi/3) - irpic[8,:,:] * np.sin (p0tables[:,:,2] + 4*np.pi/3),2) + np.power (irpic[6,:,:] * np.cos (p0tables[:,:,2]) + irpic[7,:,:] * np.cos (p0tables[:,:,2] + 2*np.pi/3) + irpic[8,:,:] * np.cos (p0tables[:,:,2] + 4*np.pi/3),2)
-    
-    #ir_filtered=(amplitude_filtered[:,:,0]+amplitude_filtered[:,:,1]+amplitude_filtered[:,:,2])/3
-    ir_filtered=(amps[:,:,0]+amps[:,:,1]+amps[:,:,2])/3
-    
-    #ampli_filt=plt.subplot(5,2,2)
+    amplitude_filtered = np.ndarray((424, 512, 3), dtype=np.float)
+    ir_filtered = np.ndarray((424, 512), dtype=np.float)
+
+    amplitude_filtered[:, :, 0] = np.power(-irpic[0, :, :] * np.sin(p0tables[:, :, 0]) - irpic[1, :, :] * np.sin(
+        p0tables[:, :, 0] + 2 * np.pi / 3) - irpic[2, :, :] * np.sin(p0tables[:, :, 0] + 4 * np.pi / 3), 2) + np.power(
+        irpic[0, :, :] * np.cos(p0tables[:, :, 0]) + irpic[1, :, :] * np.cos(p0tables[:, :, 0] + 2 * np.pi / 3) + irpic[
+                                                                                                                  2, :,
+                                                                                                                  :] * np.cos(
+            p0tables[:, :, 0] + 4 * np.pi / 3), 2)
+    amplitude_filtered[:, :, 1] = np.power(-irpic[3, :, :] * np.sin(p0tables[:, :, 1]) - irpic[4, :, :] * np.sin(
+        p0tables[:, :, 1] + 2 * np.pi / 3) - irpic[5, :, :] * np.sin(p0tables[:, :, 1] + 4 * np.pi / 3), 2) + np.power(
+        irpic[3, :, :] * np.cos(p0tables[:, :, 1]) + irpic[4, :, :] * np.cos(p0tables[:, :, 1] + 2 * np.pi / 3) + irpic[
+                                                                                                                  5, :,
+                                                                                                                  :] * np.cos(
+            p0tables[:, :, 1] + 4 * np.pi / 3), 2)
+    amplitude_filtered[:, :, 2] = np.power(-irpic[6, :, :] * np.sin(p0tables[:, :, 2]) - irpic[7, :, :] * np.sin(
+        p0tables[:, :, 2] + 2 * np.pi / 3) - irpic[8, :, :] * np.sin(p0tables[:, :, 2] + 4 * np.pi / 3), 2) + np.power(
+        irpic[6, :, :] * np.cos(p0tables[:, :, 2]) + irpic[7, :, :] * np.cos(p0tables[:, :, 2] + 2 * np.pi / 3) + irpic[
+                                                                                                                  8, :,
+                                                                                                                  :] * np.cos(
+            p0tables[:, :, 2] + 4 * np.pi / 3), 2)
+
+    # ir_filtered=(amplitude_filtered[:,:,0]+amplitude_filtered[:,:,1]+amplitude_filtered[:,:,2])/3
+    ir_filtered = (amps[:, :, 0] + amps[:, :, 1] + amps[:, :, 2]) / 3
+
+    # ampli_filt=plt.subplot(5,2,2)
     fig = plt.figure()
     ax1 = fig.add_subplot(221)
     ax1.set_title("Amplitude composed and filtered")
-    #ir_filtered = exposure.equalize_hist(ir_filtered)   
-    #ir_filtered=np.minimum(ir_filtered,np.mean(ir_filtered))
+    # ir_filtered = exposure.equalize_hist(ir_filtered)
+    # ir_filtered=np.minimum(ir_filtered,np.mean(ir_filtered))
     ax1.imshow(ir_filtered, cmap='Greens_r')
-    
-    
-    #print ir_filtered
-    
-    #%%
+
+    # print ir_filtered
+
+    # %%
     ###ATTEMPT 2 TO GET DEPTH
     '''
     depth = np.ndarray((424,512),dtype=np.float)
@@ -414,8 +426,8 @@ if __name__ == "__main__" :
 
     print "Finished depth attempt 2"
     '''
-    
-    #%%
+
+    # %%
     '''
     def undistort(x,y):
         
@@ -463,9 +475,8 @@ if __name__ == "__main__" :
     yu = y;
     return iter < max_iterations;
     '''
-    
-    
-    #%%    
+
+    # %%
     ###ATTEMPT 3 TO CALCULATE WRAPPING COEFICIENTS
     '''
     depth = np.ndarray((424,512),dtype=np.float)
@@ -503,83 +514,89 @@ if __name__ == "__main__" :
     ax2 = fig_depth.add_subplot(133)
     ax2.imshow(t2_t1,cmap='Greys')
     '''
-    def distort (x,y):
-        
-        cx=255.642
-        cy=203.704
-        fx=365.8
-        fy=365.8
-        k1=0.091391
-        k2=-0.271139
-        k3=0.0950107
-        p1=0.0
-        p2=0.0
-        
+
+
+    def distort(x, y):
+
+        cx = 255.642
+        cy = 203.704
+        fx = 365.8
+        fy = 365.8
+        k1 = 0.091391
+        k2 = -0.271139
+        k3 = 0.0950107
+        p1 = 0.0
+        p2 = 0.0
+
         x2 = x * x;
         y2 = y * y;
         r2 = x2 + y2;
         xy = x * y;
         kr = ((k3 * r2 + k2) * r2 + k1) * r2 + 1.0;
-        
-        xd = x*kr + p2*(r2 + 2*x2) + 2*p1*xy;
-        yd = y*kr + p1*(r2 + 2*y2) + 2*p2*xy;
-        
-        return xd,yd
-    
-    def undistort (x,y):
-        cx=255.642
-        cy=203.704
-        fx=365.8
-        fy=365.8
-        k1=0.091391
-        k2=-0.271139
-        k3=0.0950107
-        p1=0.0
-        p2=0.0
-            
-        
+
+        xd = x * kr + p2 * (r2 + 2 * x2) + 2 * p1 * xy;
+        yd = y * kr + p1 * (r2 + 2 * y2) + 2 * p2 * xy;
+
+        return xd, yd
+
+
+    def undistort(x, y):
+        cx = 255.642
+        cy = 203.704
+        fx = 365.8
+        fy = 365.8
+        k1 = 0.091391
+        k2 = -0.271139
+        k3 = 0.0950107
+        p1 = 0.0
+        p2 = 0.0
+
         x0 = x
         y0 = y
-    
+
         last_x = x;
         last_y = y;
         max_iterations = 100;
         iter;
-        for inter in range (0, max_iterations):
-          x2 = x*x;
-          y2 = y*y;
-          x2y2 = x2 + y2;
-          x2y22 = x2y2*x2y2;
-          x2y23 = x2y2*x2y22;
-    
-          #Jacobian matrix
-          Ja = k3*x2y23 + (k2+6*k3*x2)*x2y22 + (k1+4*k2*x2)*x2y2 + 2*k1*x2 + 6*p2*x + 2*p1*y + 1;
-          Jb = 6*k3*x*y*x2y22 + 4*k2*x*y*x2y2 + 2*k1*x*y + 2*p1*x + 2*p2*y;
-          Jc = Jb;
-          Jd = k3*x2y23 + (k2+6*k3*y2)*x2y22 + (k1+4*k2*y2)*x2y2 + 2*k1*y2 + 2*p2*x + 6*p1*y + 1;
-    
-          #//Inverse Jacobian
-          Jdet = 1/(Ja*Jd - Jb*Jc);
-          a = Jd*Jdet;
-          b = -Jb*Jdet;
-          c = -Jc*Jdet;
-          d = Ja*Jdet;
-    
-          f=0.0
-          g=0.0
-          f,g=distort(x, y);
-          f =f - x0;
-          g =g - y0;
-    
-          x =x- a*f + b*g;
-          y =y- c*f + d*g;
-          
+        for inter in range(0, max_iterations):
+            x2 = x * x;
+            y2 = y * y;
+            x2y2 = x2 + y2;
+            x2y22 = x2y2 * x2y2;
+            x2y23 = x2y2 * x2y22;
+
+            # Jacobian matrix
+            Ja = k3 * x2y23 + (k2 + 6 * k3 * x2) * x2y22 + (
+                                                               k1 + 4 * k2 * x2) * x2y2 + 2 * k1 * x2 + 6 * p2 * x + 2 * p1 * y + 1;
+            Jb = 6 * k3 * x * y * x2y22 + 4 * k2 * x * y * x2y2 + 2 * k1 * x * y + 2 * p1 * x + 2 * p2 * y;
+            Jc = Jb;
+            Jd = k3 * x2y23 + (k2 + 6 * k3 * y2) * x2y22 + (
+                                                               k1 + 4 * k2 * y2) * x2y2 + 2 * k1 * y2 + 2 * p2 * x + 6 * p1 * y + 1;
+
+            # //Inverse Jacobian
+            Jdet = 1 / (Ja * Jd - Jb * Jc);
+            a = Jd * Jdet;
+            b = -Jb * Jdet;
+            c = -Jc * Jdet;
+            d = Ja * Jdet;
+
+            f = 0.0
+            g = 0.0
+            f, g = distort(x, y);
+            f = f - x0;
+            g = g - y0;
+
+            x = x - a * f + b * g;
+            y = y - c * f + d * g;
+
         xu = x;
         yu = y;
-        return xu,yu
-    #%%    
+        return xu, yu
+
+
+    # %%
     ###ATTEMPT 4 TO CALCULATE WRAPPING COEFICIENTS
-    
+
     '''
     ab_confidence_slope= -0.5330578
     ab_confidence_offset = 0.7694894
@@ -824,116 +841,121 @@ if __name__ == "__main__" :
     ax2.imshow(ir_x,cmap='Greys')
     '''
 
-#%%
+    # %%
     fig = plt.figure("Phases and Amplitudes")
     ccp = 'Greens'
     cca = 'Greens_r'
-    
-    plt.subplots_adjust(wspace=0, hspace=0)  #Remove spaces between subplots
 
-    ax = plt.subplot(4,1,1)
+    plt.subplots_adjust(wspace=0, hspace=0)  # Remove spaces between subplots
+
+    ax = plt.subplot(4, 1, 1)
     ax.set_title("RGB image")
-    ax.set_axis_off() #Remove axis for better visualization
+    ax.set_axis_off()  # Remove axis for better visualization
     plt.imshow(i)
-    
-#    for row in range(424):
-#        phases[row,:,0] = np.unwrap(phases[row,:,0])
-#        phases[row,:,1] = np.unwrap(phases[row,:,1])
-#        phases[row,:,2] = np.unwrap(phases[row,:,2])
-#        
-#    for col in range(512):
-#        phases[:,col,0] = np.unwrap(phases[:,col,0])
-#        phases[:,col,1] = np.unwrap(phases[:,col,1])
-#        phases[:,col,2] = np.unwrap(phases[:,col,2])
-    
-#    phases[:,:,0]=filter.gaussian_filter(phases[:,:,0],3)
-#    phases[:,:,1]=filter.gaussian_filter(phases[:,:,1],3)
-#    phases[:,:,2]=filter.gaussian_filter(phases[:,:,2],3)
-    
-#    phases[:,:,0]=filter.denoise_bilateral(abs(phases[:,:,0]), sigma_range=0.05, sigma_spatial=5)
-#    phases[:,:,1]=filter.denoise_bilateral(abs(phases[:,:,1]), sigma_range=0.05, sigma_spatial=5)
-#    phases[:,:,2]=filter.denoise_bilateral(abs(phases[:,:,2]), sigma_range=0.05, sigma_spatial=5)
-    
-    
-    
 
-#    phases[:,:,0] = exposure.equalize_hist(phases[:,:,0])    
-#    phases[:,:,1] = exposure.equalize_hist(phases[:,:,1])
-#    phases[:,:,2] = exposure.equalize_hist(phases[:,:,2])
-    
-    
-    
-    ax = plt.subplot(4,4,5)
-    ax.set_axis_off() #Remove axis for better visualization
-    #ax.set_title("Frequency 1 phase-shift")
-    plt.imshow((phases[:,:,0]), cmap=ccp)
+    #    for row in range(424):
+    #        phases[row,:,0] = np.unwrap(phases[row,:,0])
+    #        phases[row,:,1] = np.unwrap(phases[row,:,1])
+    #        phases[row,:,2] = np.unwrap(phases[row,:,2])
+    #
+    #    for col in range(512):
+    #        phases[:,col,0] = np.unwrap(phases[:,col,0])
+    #        phases[:,col,1] = np.unwrap(phases[:,col,1])
+    #        phases[:,col,2] = np.unwrap(phases[:,col,2])
 
-    ax = plt.subplot(4,4,6)
-    ax.set_axis_off()
-    #ax.set_title("Frequency 2 phase-shift")
-    plt.imshow((phases[:,:,1]), cmap=ccp)
+    #    phases[:,:,0]=filter.gaussian_filter(phases[:,:,0],3)
+    #    phases[:,:,1]=filter.gaussian_filter(phases[:,:,1],3)
+    #    phases[:,:,2]=filter.gaussian_filter(phases[:,:,2],3)
 
-    ax = plt.subplot(4,4,7)
-    ax.set_axis_off()
-    #ax.set_title("Frequency 3 phase-shift")
-    plt.imshow((phases[:,:,2]), cmap=ccp)
-    
-    ax = plt.subplot(4,4,8)
-    ax.set_axis_off()
-    #ax.set_title("Composite phases")
-    plt.imshow(( (phases[:,:,0]+phases[:,:,1]+phases[:,:,2])/3 ))
+    #    phases[:,:,0]=filter.denoise_bilateral(abs(phases[:,:,0]), sigma_range=0.05, sigma_spatial=5)
+    #    phases[:,:,1]=filter.denoise_bilateral(abs(phases[:,:,1]), sigma_range=0.05, sigma_spatial=5)
+    #    phases[:,:,2]=filter.denoise_bilateral(abs(phases[:,:,2]), sigma_range=0.05, sigma_spatial=5)
 
-    ax = plt.subplot(4,4,9)
-    ax.set_axis_off()
-    #ax.set_title("Frequency 1 Amplitude")
-    plt.imshow(amps[:,:,0], cmap=cca)
 
-    ax = plt.subplot(4,4,10)
-    ax.set_axis_off()
-    #ax.set_title("Frequency 2 Amplitude")
-    plt.imshow(amps[:,:,1], cmap=cca)
 
-    ax = plt.subplot(4,4,11)
-    ax.set_axis_off()
-    #ax.set_title("Frequency 3 Amplitude")
-    plt.imshow(amps[:,:,2], cmap=cca)
-    
-    ax = plt.subplot(4,4,12)
-    ax.set_axis_off()
-    #ax.set_title("Composite amplitudes")
-    plt.imshow(clrs.rgb_to_hsv(np.minimum(amps,np.median(amps))))
-    #Showing the unrwapped ones
-    phases_unwrapped = np.ndarray((424,512,3),dtype=np.float)
-    phases_unwrapped[:,:,0] = unwrap_phase(phases[:,:,0])
-    phases_unwrapped[:,:,1] = unwrap_phase(phases[:,:,1])
-    phases_unwrapped[:,:,2] = unwrap_phase(phases[:,:,2])
-    
-    phases_unwrapped[:,:,0] = exposure.equalize_hist(phases_unwrapped[:,:,0])    
-    phases_unwrapped[:,:,1] = exposure.equalize_hist(phases_unwrapped[:,:,1])
-    phases_unwrapped[:,:,2] = exposure.equalize_hist(phases_unwrapped[:,:,2])
-    
-    
-    
-    
-    ax = plt.subplot(4,4,13)
-    ax.set_axis_off()
-    #ax.set_title("Composite amplitudes")
-    plt.imshow(phases_unwrapped[:,:,0], cmap=ccp)
-    
-    ax = plt.subplot(4,4,14)
-    ax.set_axis_off()
-    #ax.set_title("Composite amplitudes")
-    plt.imshow(phases_unwrapped[:,:,1], cmap=ccp)
-    
-    ax = plt.subplot(4,4,15)
-    ax.set_axis_off()
-    #ax.set_title("Composite amplitudes")
-    plt.imshow(phases_unwrapped[:,:,2], cmap=ccp)
-    
-    ax = plt.subplot(4,4,16)
-    ax.set_axis_off()
-    #ax.set_title("Composite amplitudes")
-    plt.imshow(( (phases_unwrapped[:,:,0]+phases_unwrapped[:,:,1]+phases_unwrapped[:,:,2])/3 ))
-    
-    
 
+    #    phases[:,:,0] = exposure.equalize_hist(phases[:,:,0])
+    #    phases[:,:,1] = exposure.equalize_hist(phases[:,:,1])
+    #    phases[:,:,2] = exposure.equalize_hist(phases[:,:,2])
+
+
+
+    ax = plt.subplot(4, 3, 4)
+    ax.set_axis_off()  # Remove axis for better visualization
+    # ax.set_title("Frequency 1 phase-shift")
+    plt.imshow((phases[:, :, 0]), cmap=ccp)
+
+    ax = plt.subplot(4, 3, 5)
+    ax.set_axis_off()
+    # ax.set_title("Frequency 2 phase-shift")
+    plt.imshow((phases[:, :, 1]), cmap=ccp)
+
+    ax = plt.subplot(4, 3, 6)
+    ax.set_axis_off()
+    # ax.set_title("Frequency 3 phase-shift")
+    plt.imshow((phases[:, :, 2]), cmap=ccp)
+
+    ax = plt.subplot(4, 3, 7)
+    ax.set_axis_off()
+    # ax.set_title("Frequency 1 Amplitude")
+    plt.imshow(amps[:, :, 0], cmap=cca)
+
+    ax = plt.subplot(4, 3, 8)
+    ax.set_axis_off()
+    # ax.set_title("Frequency 2 Amplitude")
+    plt.imshow(amps[:, :, 1], cmap=cca)
+
+    ax = plt.subplot(4, 3, 9)
+    ax.set_axis_off()
+    # ax.set_title("Frequency 3 Amplitude")
+    plt.imshow(amps[:, :, 2], cmap=cca)
+
+    phases[:, :, 0] = phases[:, :, 0]
+    phases[:, :, 1] = phases[:, :, 1]
+    phases[:, :, 2] = phases[:, :, 2]
+
+    # Showing the unrwapped ones
+    phases_unwrapped = np.ndarray((424, 512, 3), dtype=np.float)
+    phases_unwrapped[:, :, 0] = unwrap_phase(phases[:, :, 0])
+    phases_unwrapped[:, :, 1] = unwrap_phase(phases[:, :, 1])
+    phases_unwrapped[:, :, 2] = unwrap_phase(phases[:, :, 2])
+
+    #    phases_unwrapped[:,:,0] = exposure.equalize_hist(phases_unwrapped[:,:,0])
+    #    phases_unwrapped[:,:,1] = exposure.equalize_hist(phases_unwrapped[:,:,1])
+    #    phases_unwrapped[:,:,2] = exposure.equalize_hist(phases_unwrapped[:,:,2])
+
+    print np.mean(phases[:, :, 0]), np.max(phases[:, :, 0]), np.min(phases[:, :, 0])
+    print np.mean(phases_unwrapped[:, :, 0]), np.max(phases_unwrapped[:, :, 0]), np.min(phases_unwrapped[:, :, 0])
+
+    ax = plt.subplot(4, 3, 10)
+    ax.set_axis_off()
+    # ax.set_title("Composite amplitudes")
+    plt.imshow(phases_unwrapped[:, :, 0], cmap=ccp)
+
+    ax = plt.subplot(4, 3, 11)
+    ax.set_axis_off()
+    # ax.set_title("Composite amplitudes")
+    plt.imshow(phases_unwrapped[:, :, 1], cmap=ccp)
+
+    ax = plt.subplot(4, 3, 12)
+    ax.set_axis_off()
+    # ax.set_title("Composite amplitudes")
+    plt.imshow(phases_unwrapped[:, :, 2], cmap=ccp)
+
+    
+    print "phases.shape:", phases.shape
+
+    unwrapped_ = unwrap_superior(medfilt(phases + np.pi))
+    plt.figure("superior")
+    plt.subplot(1, 3, 1)
+    plt.imshow((unwrapped_[:,:,0]), cmap=ccp)
+    plt.subplot(1, 3, 2)
+    plt.imshow((unwrapped_[:,:,1]), cmap=ccp)
+    plt.subplot(1, 3, 3)
+    plt.imshow((unwrapped_[:,:,2]), cmap=ccp)
+    print "unwrapped: ", unwrapped_.shape, unwrapped_.max(), unwrapped_.min()
+    with open("unwrapped.dat", 'w') as unw:
+        np.save(unw, unwrapped_)
+        
+    plt.show()
+    print "finished"
