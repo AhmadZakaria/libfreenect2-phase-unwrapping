@@ -257,10 +257,10 @@ bool Viewer::render()
 //exit(255);
 //// END WORKS
 
-            //      FILE* pFile;
-            //      pFile = fopen("dumprgb.binary", "a");
-            //      fwrite(raw_packet->jpeg_buffer, sizeof(unsigned char), jpeg_length, pFile);
-            //      fclose(pFile);
+//            FILE* pFile;
+//            pFile = fopen("dumprgb.binary", "a");
+//            fwrite(raw_packet->jpeg_buffer, sizeof(unsigned char), jpeg_length, pFile);
+//            fclose(pFile);
 
             // End outputting frame
 
