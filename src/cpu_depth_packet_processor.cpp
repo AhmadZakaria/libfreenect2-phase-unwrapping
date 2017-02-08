@@ -915,31 +915,34 @@ void CpuDepthPacketProcessor::process(const DepthPacket &packet)
 
     float *m_ptr = (m.ptr(0, 0)->val);
     //decodePixelMeasurement(data, 0, x, y);
-//    FILE* pFile;
 
-//    timeval curTime;
-//    gettimeofday(&curTime, NULL);
-//    int milli = curTime.tv_usec / 1000;
+    //// BEGIN SNIFFING
+    FILE* pFile;
 
-//    char buffer [80];
-//    strftime(buffer, 80, "%Y%m%d-%H%M%S", localtime(&curTime.tv_sec));
+    timeval curTime;
+    gettimeofday(&curTime, NULL);
+    int milli = curTime.tv_usec / 1000;
 
-//    char currentTime[84] = "";
-//    sprintf(currentTime, "data/%s%d.ir", buffer, milli);
+    char buffer [80];
+    strftime(buffer, 80, "%Y%m%d-%H%M%S", localtime(&curTime.tv_sec));
 
-//    pFile = fopen(currentTime, "wr");
-//    int counter = 0;
-//    for (int img = 0; img < 9; ++img)
-//        for(int y = 0; y < 424; ++y)
-//            for(int x = 0; x < 512; ++x)
-//            {
-//                int32_t pixel = impl_->decodePixelMeasurement(packet.buffer, img, x, y);
-//                fwrite(&pixel, sizeof(int32_t), 1, pFile);
-//                counter++;
-//            }
-//    std::cout<<"counter"<<counter<<std::endl;
-//    fclose(pFile);
+    char currentTime[84] = "";
+    sprintf(currentTime, "data/%s%d.ir", buffer, milli);
+
+    pFile = fopen(currentTime, "wr");
+    int counter = 0;
+    for (int img = 0; img < 9; ++img)
+        for(int y = 0; y < 424; ++y)
+            for(int x = 0; x < 512; ++x)
+            {
+                int32_t pixel = impl_->decodePixelMeasurement(packet.buffer, img, x, y);
+                fwrite(&pixel, sizeof(int32_t), 1, pFile);
+                counter++;
+            }
+    std::cout<<"counter"<<counter<<std::endl;
+    fclose(pFile);
     ////exit(255);
+    //// END SNIFFING
 
     //  char currentTime_a1[84] = "";
     //  char currentTime_b1[84] = "";
@@ -1064,36 +1067,36 @@ void CpuDepthPacketProcessor::process(const DepthPacket &packet)
     }
     else
     {
-        timeval curTime;
-        gettimeofday(&curTime, NULL);
-        int milli = curTime.tv_usec / 1000;
+//        timeval curTime;
+//        gettimeofday(&curTime, NULL);
+//        int milli = curTime.tv_usec / 1000;
 
-        char buffer [80];
-        strftime(buffer, 80, "%Y%m%d-%H%M%S", localtime(&curTime.tv_sec));
+//        char buffer [80];
+//        strftime(buffer, 80, "%Y%m%d-%H%M%S", localtime(&curTime.tv_sec));
 
-        char currentTime_phase0[84] = "";
-        char currentTime_phase1[84] = "";
-        char currentTime_phase2[84] = "";
+//        char currentTime_phase0[84] = "";
+//        char currentTime_phase1[84] = "";
+//        char currentTime_phase2[84] = "";
 
-        sprintf(currentTime_phase0, "data/%s%d.ir_phase0", buffer, milli);
-        sprintf(currentTime_phase1, "data/%s%d.ir_phase1", buffer, milli);
-        sprintf(currentTime_phase2, "data/%s%d.ir_phase2", buffer, milli);
+//        sprintf(currentTime_phase0, "data/%s%d.ir_phase0", buffer, milli);
+//        sprintf(currentTime_phase1, "data/%s%d.ir_phase1", buffer, milli);
+//        sprintf(currentTime_phase2, "data/%s%d.ir_phase2", buffer, milli);
 
-        FILE* pFileph0 = fopen(currentTime_phase0, "wr");
-        FILE* pFileph1 = fopen(currentTime_phase1, "wr");
-        FILE* pFileph2 = fopen(currentTime_phase2, "wr");
-        for(int y = 0; y < 424; ++y)
-            for(int x = 0; x < 512; ++x, m_ptr += 9)
-            {
-                impl_->processPixelStage2(x, y, m_ptr + 0, m_ptr + 3, m_ptr + 6, out_ir.ptr(423 - y, x), out_depth.ptr(423 - y, x), 0);
-                fwrite(m_ptr + 0, sizeof(float), 1, pFileph0);
-                fwrite(m_ptr + 3, sizeof(float), 1, pFileph1);
-                fwrite(m_ptr + 6, sizeof(float), 1, pFileph2);
-            }
-        fclose(pFileph0);
-        fclose(pFileph1);
-        fclose(pFileph2);
-        exit(253);
+//        FILE* pFileph0 = fopen(currentTime_phase0, "wr");
+//        FILE* pFileph1 = fopen(currentTime_phase1, "wr");
+//        FILE* pFileph2 = fopen(currentTime_phase2, "wr");
+//        for(int y = 0; y < 424; ++y)
+//            for(int x = 0; x < 512; ++x, m_ptr += 9)
+//            {
+//                impl_->processPixelStage2(x, y, m_ptr + 0, m_ptr + 3, m_ptr + 6, out_ir.ptr(423 - y, x), out_depth.ptr(423 - y, x), 0);
+//                fwrite(m_ptr + 0, sizeof(float), 1, pFileph0);
+//                fwrite(m_ptr + 3, sizeof(float), 1, pFileph1);
+//                fwrite(m_ptr + 6, sizeof(float), 1, pFileph2);
+//            }
+//        fclose(pFileph0);
+//        fclose(pFileph1);
+//        fclose(pFileph2);
+//        exit(253);
     }
 
     impl_->stopTiming(LOG_INFO);
