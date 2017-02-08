@@ -15,8 +15,8 @@ from scipy.optimize import minimize
 from skimage.restoration import denoise_tv_chambolle, denoise_bilateral
 import cv2
 
-ccp = 'Greens_r'
-cca = 'Greens_r'
+ccp = 'Greys_r'
+cca = 'Greys_r'
 
 
 def get_trig_tables(p0tables_):
@@ -94,7 +94,14 @@ if __name__ == "__main__":
         p0tables = p0tables.reshape((3, 424, 512))
     #TODO: check that the p0tables are right
 
-    with open("../data/20160716-142209598.ir", "rb") as f2:
+#    np.savetxt('p0_0.out',p0tables[0], delimiter=',',fmt='%d')
+#    np.savetxt('p0_1.out',p0tables[1], delimiter=',',fmt='%d')
+#    np.savetxt('p0_2.out',p0tables[2], delimiter=',',fmt='%d')
+
+#    with open("../data/20160717-184820784.ir", "rb") as f2:
+    with open("../data/20160717-185038290.ir", "rb") as f2:
+#    with open("../data/20160716-142209598.ir", "rb") as f2:
+#    with open("../data/20160714-190251793.ir", "rb") as f2: #corridor
         irpic = np.fromfile(f2, dtype=np.int32).reshape((9, 424, 512))
      
     irpic = irpic.astype(dtype=np.float32)
@@ -102,17 +109,17 @@ if __name__ == "__main__":
         irpic[i] = np.flipud(irpic[i])
 #        irpic[i] = cv2.bilateralFilter(irpic[i],7, 40, 10)
         
-#    np.savetxt('ir_0.out',irpic[0,:,:], delimiter=',',fmt='%d')
-#    np.savetxt('ir_1.out',irpic[1,:,:], delimiter=',',fmt='%d')
-#    np.savetxt('ir_2.out',irpic[2,:,:], delimiter=',',fmt='%d')
-#    np.savetxt('ir_3.out',irpic[3,:,:], delimiter=',',fmt='%d')
-#    np.savetxt('ir_4.out',irpic[4,:,:], delimiter=',',fmt='%d')
-#    np.savetxt('ir_5.out',irpic[5,:,:], delimiter=',',fmt='%d')
-#    np.savetxt('ir_6.out',irpic[6,:,:], delimiter=',',fmt='%d')
-#    np.savetxt('ir_7.out',irpic[7,:,:], delimiter=',',fmt='%d')
-#    np.savetxt('ir_8.out',irpic[8,:,:], delimiter=',',fmt='%d')
-    
-    
+#    np.savetxt('../ULB_2/ir_0.out',irpic[0,:,:], delimiter=',',fmt='%d')
+#    np.savetxt('../ULB_2/ir_1.out',irpic[1,:,:], delimiter=',',fmt='%d')
+#    np.savetxt('../ULB_2/ir_2.out',irpic[2,:,:], delimiter=',',fmt='%d')
+#    np.savetxt('../ULB_2/ir_3.out',irpic[3,:,:], delimiter=',',fmt='%d')
+#    np.savetxt('../ULB_2/ir_4.out',irpic[4,:,:], delimiter=',',fmt='%d')
+#    np.savetxt('../ULB_2/ir_5.out',irpic[5,:,:], delimiter=',',fmt='%d')
+#    np.savetxt('../ULB_2/ir_6.out',irpic[6,:,:], delimiter=',',fmt='%d')
+#    np.savetxt('../ULB_2/ir_7.out',irpic[7,:,:], delimiter=',',fmt='%d')
+#    np.savetxt('../ULB_2/ir_8.out',irpic[8,:,:], delimiter=',',fmt='%d')
+#    
+#    exit()
 #    ax = plt.subplot(4, 1, 1)
 #
 #    ax.set_axis_off()
@@ -141,10 +148,23 @@ if __name__ == "__main__":
     ir_a2, ir_b2, ir_amp2 = process_measurement_triple(trig_table1, ab_multiplier1, irpic[3:6])
     ir_a3, ir_b3, ir_amp3 = process_measurement_triple(trig_table2, ab_multiplier2, irpic[6:9])
     
+    ir_a1 = cv2.bilateralFilter(ir_a1,7, 40, 10)
+    ir_a2 = cv2.bilateralFilter(ir_a2,7, 40, 10)
+    ir_a3 = cv2.bilateralFilter(ir_a3,7, 40, 10)
+    
+    ir_b1 = cv2.bilateralFilter(ir_b1,7, 40, 10)
+    ir_b2 = cv2.bilateralFilter(ir_b2,7, 40, 10)
+    ir_b3 = cv2.bilateralFilter(ir_b3,7, 40, 10)
+    
+    
+    
     phase0, amp0 = transform_measurements(ir_a1, ir_b1, ab_multiplier0)
     phase1, amp1 = transform_measurements(ir_a2, ir_b2, ab_multiplier1)
     phase2, amp2 = transform_measurements(ir_a3, ir_b3, ab_multiplier2)
     
+#    phase0 = cv2.bilateralFilter(phase0,7, 40, 10)
+#    phase1 = cv2.bilateralFilter(phase1,7, 40, 10)
+#    phase2 = cv2.bilateralFilter(phase2,7, 40, 10)
     
     ab_output_multiplier = 16.0
     ir_out = np.minimum((amp0 + amp1 + amp2 / 3.0) * ab_output_multiplier, 65535.0)
@@ -167,23 +187,23 @@ if __name__ == "__main__":
 
      
     # Showing the unrwapped ones
-#    phases_unwrapped = np.ndarray((3, 424, 512), dtype=np.float)
-#    phases_unwrapped[0] = unwrap_phase(phase0)
-#    phases_unwrapped[1] = unwrap_phase(phase1)
-#    phases_unwrapped[2] = unwrap_phase(phase2)
+    phases_unwrapped = np.ndarray((3, 424, 512), dtype=np.float)
+    phases_unwrapped[0] = unwrap_phase(phase0)
+    phases_unwrapped[1] = unwrap_phase(phase1)
+    phases_unwrapped[2] = unwrap_phase(phase2)
     
-#    plt.figure("Numpy unwrapped")
-#    ax = plt.subplot(1, 3, 1)
-#    ax.set_axis_off()
-#    plt.imshow(phases_unwrapped[0, :, :], cmap=ccp)
+    plt.figure("Numpy unwrapped")
+    ax = plt.subplot(1, 3, 1)
+    ax.set_axis_off()
+    plt.imshow(phases_unwrapped[0, :, :], cmap=ccp)
 
-#    ax = plt.subplot(1, 3, 2)
-#    ax.set_axis_off()
-#    plt.imshow(phases_unwrapped[1, :, :], cmap=ccp)
-#
-#    ax = plt.subplot(1, 3, 3)
-#    ax.set_axis_off()
-#    plt.imshow(phases_unwrapped[2, :, :], cmap=ccp)
+    ax = plt.subplot(1, 3, 2)
+    ax.set_axis_off()
+    plt.imshow(phases_unwrapped[1, :, :], cmap=ccp)
+
+    ax = plt.subplot(1, 3, 3)
+    ax.set_axis_off()
+    plt.imshow(phases_unwrapped[2, :, :], cmap=ccp)
     
     unwrapped_, confidence_map = unwrap_superior_newidx(np.array([phase0,phase1,phase2]))
     unwrapped_ = unwrapped_ * 18.5 / 10000.

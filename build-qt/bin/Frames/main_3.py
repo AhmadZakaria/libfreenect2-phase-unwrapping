@@ -20,7 +20,7 @@ from scipy.signal import medfilt
 from scipy.optimize import minimize
 
 ccp = 'Greys_r'
-cca = 'Greens_r'
+cca = 'Greys_r'
 
 def interpolate(value, leftMin, leftMax, rightMin, rightMax):
     # Figure out how 'wide' each range is
@@ -142,8 +142,9 @@ if __name__ == "__main__":
     #        plt.imshow(p0tables[:,:,2])
 
     # with open("decodedIR", "rb") as f2:
-#    with open("../data/20160616-120946344.ir", "rb") as f2: # Boris
-    with open("../data/20160616-12434139.ir", "rb") as f2:
+    with open("../data/20160616-120946344.ir", "rb") as f2: # Boris
+#    with open("../data/20160714-190251793.ir", "rb") as f2: #corridor
+#    with open("../data/20160616-12434139.ir", "rb") as f2:
         plt.figure("Raw data")
         irpic = np.fromfile(f2, dtype=np.int32)
         print (irpic.shape)
@@ -462,35 +463,35 @@ if __name__ == "__main__":
     sigma=0.1              #distance between points
     
     attempt_1_depth = np.ndarray((424, 512), dtype=np.float)
-
-    for row in range(424):
-        for col in range(512):
-            #intersect, the saw tih 80mhz with the phase val, retruning 10 points of intersections with 2 points of variance, of 0.1 stepsize and
-            val_80 =phases[row, col, 0]
-            val_16 =phases[row, col, 1]
-            val_120=phases[row, col, 2]
-            intersections_80 = intersect_saw  (80, num_wraps_freq_1, val_80, num_points, sigma)  
-            intersections_16 = intersect_saw  (16, num_wraps_freq_2, val_16, num_points, sigma)  
-            intersections_120= intersect_saw (120, num_wraps_freq_3, val_120, num_points, sigma)  
-            
-            
-            #search through the 3 tables and find values that are closest
-            #6 indices, 2 for each table
-            num_rows_80 = intersections_80.shape[0]
-            num_cols_80 = intersections_80.shape[1]
-            
-            num_rows_16 = intersections_16.shape[0]
-            num_cols_16 = intersections_16.shape[1]
-            
-            num_rows_120 = intersections_120.shape[0]
-            num_cols_120 = intersections_120.shape[1]
-            
-            difference=100000
-            n_0=100
-            n_1=100
-            n_2=100
-            
-            mean_dist=100
+#
+#    for row in range(424):
+#        for col in range(512):
+#            #intersect, the saw tih 80mhz with the phase val, retruning 10 points of intersections with 2 points of variance, of 0.1 stepsize and
+#            val_80 =phases[row, col, 0]
+#            val_16 =phases[row, col, 1]
+#            val_120=phases[row, col, 2]
+#            intersections_80 = intersect_saw  (80, num_wraps_freq_1, val_80, num_points, sigma)  
+#            intersections_16 = intersect_saw  (16, num_wraps_freq_2, val_16, num_points, sigma)  
+#            intersections_120= intersect_saw (120, num_wraps_freq_3, val_120, num_points, sigma)  
+#            
+#            
+#            #search through the 3 tables and find values that are closest
+#            #6 indices, 2 for each table
+#            num_rows_80 = intersections_80.shape[0]
+#            num_cols_80 = intersections_80.shape[1]
+#            
+#            num_rows_16 = intersections_16.shape[0]
+#            num_cols_16 = intersections_16.shape[1]
+#            
+#            num_rows_120 = intersections_120.shape[0]
+#            num_cols_120 = intersections_120.shape[1]
+#            
+#            difference=100000
+#            n_0=100
+#            n_1=100
+#            n_2=100
+#            
+#            mean_dist=100
             
 #            print "starting the big loops"
 #            for row_80 in range (num_rows_80):
@@ -507,15 +508,26 @@ if __name__ == "__main__":
 ##                                        
 #                                    
                                     
-            print "mean_dist is", mean_dist, "with difference", difference
-            attempt_1_depth[row,col]=mean_dist
+#            print "mean_dist is", mean_dist, "with difference", difference
+#            attempt_1_depth[row,col]=mean_dist
 #            print "num_rows",num_rows_120
 #            print "num_cols",num_cols_120
     # %%
-    fig = plt.figure("Phases and Amplitudes")
-    ccp = 'Greens'
-    cca = 'Greens_r'
+    
+    ccp = 'Greys'
+    cca = 'Greys_r'
 
+    plt.figure("corr_phase_bad0")
+    plt.imshow((phases[:, :, 0]), cmap=ccp)
+
+    plt.figure("corr_phase_bad1")
+    plt.imshow((phases[:, :, 1]), cmap=ccp)
+
+    plt.figure("corr_phase_bad2")
+    plt.imshow((phases[:, :, 2]), cmap=ccp)
+    plt.figure()    
+    fig = plt.figure("Phases and Amplitudes")
+    
     plt.subplots_adjust(wspace=0, hspace=0)  # Remove spaces between subplots
 
     ax = plt.subplot(4, 1, 1)
