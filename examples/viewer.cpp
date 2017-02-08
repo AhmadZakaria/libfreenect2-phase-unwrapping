@@ -2,15 +2,15 @@
 #include <cstdlib>
 
 
-Viewer::Viewer() : shader_folder("src/shader/"), 
-                   win_width(600),
+Viewer::Viewer() : shader_folder("src/shader/"),
+    win_width(600),
                    win_height(400)
 {
 }
 
 static void glfwErrorCallback(int error, const char* description)
 {
-  std::cerr << "GLFW error " << error << " " << description << std::endl;
+    std::cerr << "GLFW error " << error << " " << description << std::endl;
 }
 
 void Viewer::initialize()
@@ -20,7 +20,7 @@ void Viewer::initialize()
 
     GLFWerrorfun prev_func = glfwSetErrorCallback(glfwErrorCallback);
     if (prev_func)
-      glfwSetErrorCallback(prev_func);
+        glfwSetErrorCallback(prev_func);
 
     // setup context
     glfwDefaultWindowHints();
@@ -35,7 +35,7 @@ void Viewer::initialize()
 #endif
     //glfwWindowHint(GLFW_VISIBLE, debug ? GL_TRUE : GL_FALSE);
 
-    window = glfwCreateWindow(win_width*2, win_height*2, "Viewer (press ESC to exit)", 0, NULL);
+    window = glfwCreateWindow(win_width * 2, win_height * 2, "Viewer (press ESC to exit)", 0, NULL);
     if (window == NULL)
     {
         std::cerr << "Failed to create opengl window." << std::endl;
@@ -48,55 +48,55 @@ void Viewer::initialize()
     gl(b);
 
     std::string vertexshadersrc = ""
-        "#version 330\n"
-                                                
-        "in vec2 Position;"
-        "in vec2 TexCoord;"
-                    
-        "out VertexData{"
-        "vec2 TexCoord;" 
-        "} VertexOut;"  
-                    
-        "void main(void)"
-        "{"
-        "    gl_Position = vec4(Position, 0.0, 1.0);"
-        "    VertexOut.TexCoord = TexCoord;"
-        "}";
-    std::string grayfragmentshader = ""
-        "#version 330\n"
-        
-        "uniform sampler2DRect Data;"
-        
-        "vec4 tempColor;"
-        "in VertexData{"
-        "    vec2 TexCoord;"
-        "} FragmentIn;"
-        
-        "layout(location = 0) out vec4 Color;"
-        
-        "void main(void)"
-        "{"
-            "ivec2 uv = ivec2(FragmentIn.TexCoord.x, FragmentIn.TexCoord.y);"
-            "tempColor = texelFetch(Data, uv);"
-            "Color = vec4(tempColor.x/4500, tempColor.x/4500, tempColor.x/4500, 1);"
-        "}";
-    std::string fragmentshader = ""
-        "#version 330\n"
-        
-        "uniform sampler2DRect Data;"
-        
-        "in VertexData{"
-        "    vec2 TexCoord;"
-        "} FragmentIn;"
-       
-        "layout(location = 0) out vec4 Color;"
-        
-        "void main(void)"
-        "{"
-        "    ivec2 uv = ivec2(FragmentIn.TexCoord.x, FragmentIn.TexCoord.y);"
+                                  "#version 330\n"
 
-        "    Color = texelFetch(Data, uv);"
-        "}";
+                                  "in vec2 Position;"
+                                  "in vec2 TexCoord;"
+
+                                  "out VertexData{"
+                                  "vec2 TexCoord;"
+                                  "} VertexOut;"
+
+                                  "void main(void)"
+                                  "{"
+                                  "    gl_Position = vec4(Position, 0.0, 1.0);"
+                                  "    VertexOut.TexCoord = TexCoord;"
+                                  "}";
+    std::string grayfragmentshader = ""
+                                     "#version 330\n"
+
+                                     "uniform sampler2DRect Data;"
+
+                                     "vec4 tempColor;"
+                                     "in VertexData{"
+                                     "    vec2 TexCoord;"
+                                     "} FragmentIn;"
+
+                                     "layout(location = 0) out vec4 Color;"
+
+                                     "void main(void)"
+                                     "{"
+                                     "ivec2 uv = ivec2(FragmentIn.TexCoord.x, FragmentIn.TexCoord.y);"
+                                     "tempColor = texelFetch(Data, uv);"
+                                     "Color = vec4(tempColor.x/4500, tempColor.x/4500, tempColor.x/4500, 1);"
+                                     "}";
+    std::string fragmentshader = ""
+                                 "#version 330\n"
+
+                                 "uniform sampler2DRect Data;"
+
+                                 "in VertexData{"
+                                 "    vec2 TexCoord;"
+                                 "} FragmentIn;"
+
+                                 "layout(location = 0) out vec4 Color;"
+
+                                 "void main(void)"
+                                 "{"
+                                 "    ivec2 uv = ivec2(FragmentIn.TexCoord.x, FragmentIn.TexCoord.y);"
+
+                                 "    Color = texelFetch(Data, uv);"
+                                 "}";
 
     renderShader.setVertexShader(vertexshadersrc);
     renderShader.setFragmentShader(fragmentshader);
@@ -122,8 +122,8 @@ void Viewer::winsize_callbackstatic(GLFWwindow* window, int w, int h)
 
 void Viewer::winsize_callback(GLFWwindow* window, int w, int h)
 {
-    win_width = w/2;
-    win_height = h/2;
+    win_width = w / 2;
+    win_height = h / 2;
 }
 
 void Viewer::key_callbackstatic(GLFWwindow* window, int key, int scancode, int action, int mods)
@@ -146,8 +146,7 @@ void Viewer::onOpenGLBindingsChanged(OpenGLBindings *b)
     ir.gl(b);
 }
 
-bool Viewer::render()
-{
+bool Viewer::render() {
     // wipe the drawing surface clear
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -156,8 +155,7 @@ bool Viewer::render()
 
     std::map<std::string, libfreenect2::Frame*>::iterator iter;
 
-    for (iter = frames.begin(); iter != frames.end(); ++iter)
-    {
+    for (iter = frames.begin(); iter != frames.end(); ++iter) {
         libfreenect2::Frame* frame = iter->second;
 
         // Using the frame buffer size to account for screens where window.size != framebuffer.size, e.g. retina displays
@@ -167,8 +165,7 @@ bool Viewer::render()
 
         glViewport(x, y, fb_width_half, fb_height_half);
         x += fb_width_half;
-        if (x >= (fb_width - 1))
-        {
+        if (x >= (fb_width - 1)) {
             x = 0;
             y += fb_height_half;
         }
@@ -177,11 +174,11 @@ bool Viewer::render()
         float h = static_cast<float>(frame->height);
 
         Vertex bl = { -1.0f, -1.0f, 0.0f, 0.0f };
-        Vertex br = { 1.0f, -1.0f, w, 0.0f }; 
+        Vertex br = { 1.0f, -1.0f, w, 0.0f };
         Vertex tl = { -1.0f, 1.0f, 0.0f, h };
         Vertex tr = { 1.0f, 1.0f, w, h };
         Vertex vertices[] = {
-            bl, tl, tr, 
+            bl, tl, tr,
             tr, br, bl
         };
 
@@ -216,9 +213,11 @@ bool Viewer::render()
         }
         else
         {
-            // Start outputting frame
-            int* bwValues = (int*)malloc(frame->width * frame->height *sizeof(int)); //this is where I want the full depth values to be stored
 
+            // Start outputting frame
+            int* bwValues = (int*)malloc(frame->width * frame->height * sizeof(int)); //this is where I want the full depth values to be stored
+
+            // this code is not needed anymore
 //            for (int i = 0, bit_offset = 0; i < frame->width * frame->height; i++,bit_offset += 11){
 //                int p = i;
 //                uint32_t pixel = 0; // value of pixel
@@ -244,9 +243,9 @@ bool Viewer::render()
 //                    bwValues[i] = pixel;
 //            }
 
-            ///// WORKS
+            ///// This outputs the IR image
             float *frame_data = (float *)frame->data;
-            for (int i = 0; i < frame->width * frame->height; i++){
+            for (int i = 0; i < frame->width * frame->height; i++) {
                 bwValues[i] = frame_data[i];
             }
 
@@ -257,12 +256,8 @@ bool Viewer::render()
 //exit(255);
 //// END WORKS
 
-//            FILE* pFile;
-//            pFile = fopen("dumprgb.binary", "a");
-//            fwrite(raw_packet->jpeg_buffer, sizeof(unsigned char), jpeg_length, pFile);
-//            fclose(pFile);
 
-            // End outputting frame
+
 
             renderGrayShader.use();
 
@@ -282,7 +277,7 @@ bool Viewer::render()
 
     // put the stuff we've been drawing onto the display
     glfwSwapBuffers(window);
-    // update other events like input handling 
+    // update other events like input handling
     glfwPollEvents();
 
     return shouldStop || glfwWindowShouldClose(window);
